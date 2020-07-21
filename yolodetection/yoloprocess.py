@@ -1,6 +1,9 @@
 import fcntl
 import os.path, sys
-from subprocess import Popen, PIPE, check_output
+
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+os.chdir("/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet")  # change to where darknet is
+from subprocess import Popen, PIPE
 import select
 import cv2
 
@@ -15,26 +18,35 @@ class YOLOProcess:
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn.weights",
                             "-thresh", "0.1"]
 
-        self.process = Popen(cmdline_args, stdin=PIPE, stdout=PIPE)
-        fcntl.fcntl(self.process.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)  # setting non-blocking pipes
+        self.process = Popen(cmdline_args)  #, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        # fcntl.fcntl(self.process.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)  # setting non-blocking pipes
 
     def detect(self, image_path="data/dog.jpg"):
         # reading command line and waiting for YOLO to finish setup/detection
         stdout_buffer = ""
         while True:
             try:
+                # print("Selecting")
                 select.select([self.process.stdout], [], [])
 
+                # print("Reading")
                 stdout = self.process.stdout.read()
-                stdout_buffer += stdout
+                stdout_buffer += str(stdout)
+
+                stderr = self.process.stderr.read()
+                if stderr is not None and stderr != b'':
+                    print("STDERR: {}".format(str(stderr)))
+
+                # print(stdout_buffer)
 
                 if len(stdout.strip()) > 0:
                     print('get %s' % stdout)
 
                 if 'Enter Image Path' in stdout_buffer:
+                    print("Oh yes.")
                     break
 
-                stdout_buffer = ""
+                # stdout_buffer = ""
 
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -57,7 +69,7 @@ class YOLOProcess:
 
                 stdout = self.process.stdout.read()
                 print(stdout)
-                stdout_buffer += stdout
+                stdout_buffer += str(stdout)
 
                 if len(stdout.strip()) > 0:
                     print('get %s' % stdout)

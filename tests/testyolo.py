@@ -1,7 +1,7 @@
 from yolodetection.yoloprocess import YOLOProcess
 import os
 
-os.chdir("/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet")  # change to where darknet is
+# os.chdir("/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet")  # change to where darknet is
 
 # yolo_args = ["/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/darknet",
 #              "detector", "test",
@@ -20,7 +20,7 @@ yolo_args = ["./darknet",
              ]
 yolo = YOLOProcess(cmdline_args=yolo_args)
 
-detection_successful = yolo.detect("frame.jpg\n")
-print("Haha")
-if detection_successful:
-    yolo.showPredictions()
+# detection_successful = yolo.detect("frame.jpg\n")
+# print("Haha")
+# if detection_successful:
+#     yolo.showPredictions()
