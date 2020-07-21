@@ -13,26 +13,28 @@ class YOLOProcess:
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/cfg/coco.data",
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn-obj.cfg",
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn.weights",
-                            "-thresh", "0.3"]
+                            "-thresh", "0.1"]
 
         self.process = Popen(cmdline_args, stdin=PIPE, stdout=PIPE)
         fcntl.fcntl(self.process.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)  # setting non-blocking pipes
 
     def detect(self, image_path="data/dog.jpg"):
         # reading command line and waiting for YOLO to finish setup/detection
+        stdout_buffer = ""
         while True:
             try:
-                # select.select([self.process.stdout], [], [])
-                # stdout, stderr = self.process.communicate()
+                select.select([self.process.stdout], [], [])
 
                 stdout = self.process.stdout.read()
-                if stdout is not None:
-                    stdout = stdout.decode('utf-8')
+                stdout_buffer += stdout
 
-                    if 'Enter Image Path' in stdout:
-                        if len(stdout.strip()) > 0:
-                            print(stdout)
-                        break
+                if len(stdout.strip()) > 0:
+                    print('get %s' % stdout)
+
+                if 'Enter Image Path' in stdout_buffer:
+                    break
+
+                stdout_buffer = ""
 
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -45,25 +47,25 @@ class YOLOProcess:
         # send image to YOLO detection
         try:
             print(image_path)
-            self.process.stdin.write(image_path.encode('utf-8'))
-            print("Ne dda")
+            self.process.stdin.write(image_path)
+            # print("Ne dda")
+
+            stdout_buffer = ""
 
             while True:
-                stdout_buffer = ""
-                # select.select([self.process.stdout], [], [])
+                select.select([self.process.stdout], [], [])
+
                 stdout = self.process.stdout.read()
                 print(stdout)
-                if stdout is not None:
-                    stdout = stdout.decode('utf-8')
-                    stdout_buffer += stdout
+                stdout_buffer += stdout
 
-                    if len(stdout.strip()) > 0:
-                        print(stdout)
+                if len(stdout.strip()) > 0:
+                    print('get %s' % stdout)
 
-                    if 'Enter Image Path' in stdout_buffer:
-                        print("Enter image path yaaay")
-                        if self.checkPredictionsExist():
-                            return True
+                if 'Enter Image Path' in stdout_buffer:
+                    print("Enter image path yaaay")
+                    if self.checkPredictionsExist():
+                        return True
 
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()

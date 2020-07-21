@@ -15,6 +15,14 @@ class Webcam:
 
         return ret, frame
 
+    def saveFrame(self, grayscale=False, path="frame.jpg"):
+        if grayscale:
+            gray = cv2.cvtColor(self.last_frame, cv2.COLOR_BGR2GRAY)
+            cv2.imwrite(path, gray)
+        else:
+            cv2.imwrite(path, self.last_frame)
+
+
     def setResolution(self, width=640, height=480):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)

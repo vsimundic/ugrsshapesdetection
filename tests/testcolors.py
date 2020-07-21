@@ -1,19 +1,6 @@
 import cv2
-
-
-def convertBGR2YCrCb(R, G, B):
-    Y = int(round(0.299 * R + 0.587 * G + 0.114 * B))
-    Cb = int(round(128 - 0.169*R - 0.331*G + 0.500*B))
-    Cr = int(round(128 + 0.5*R - 0.419*G - 0.081*B))
-
-    if Y > 255:
-        Y = 255
-    if Cb > 255:
-        Cb = 255
-    if Cr > 255:
-        Cr = 255
-    return Y, Cr, Cb
-
+import colordetermination.colordeterminator as cld
+import numpy as np
 
 # image_white = cv2.imread('red.png')
 # # cv2.imshow("White color", image_white)
@@ -26,4 +13,25 @@ def convertBGR2YCrCb(R, G, B):
 # print("#########################################")
 # print(imageycrcb)
 
-print(convertBGR2YCrCb(127,0,255))
+print(cld.PixelBGR2YCrCb(127, 0, 255))
+
+test_image = cv2.imread('kvadar0001.jpg')
+cv2.imshow("Doggg", test_image)
+r = cv2.selectROI("Doggg", test_image)
+
+cropped_im = test_image[int(r[1]):int(r[1] + r[3]), int(r[0]):int(r[0] + r[2])]
+cv2.imshow("Cropped", cropped_im)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# image_ycrcb = cld.ImageBGR2YCrCb(cropped_im)
+cropped_im = cv2.cvtColor(cropped_im, cv2.COLOR_BGR2RGB)
+# rows, cols, _ = image_ycrcb.shape
+
+r = int(np.mean(cropped_im[:, :, 0]))
+g = int(np.mean(cropped_im[:, :, 1]))
+b = int(np.mean(cropped_im[:, :, 2]))
+# print(cropped_im[:, :, 0])
+
+print(b, g, r)
+print(min(cld.colors.items(), key=cld.NearestColorKey((r, g, b))))
