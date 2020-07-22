@@ -1,8 +1,8 @@
 import fcntl
 import os.path, sys
 
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-os.chdir("/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/")  # change to where darknet is
+# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+os.chdir("/home/pi/UGRS_projekt/darknet_new/darknet-nnpack")  # change to where darknet is
 from subprocess import Popen, PIPE
 import select
 import cv2
@@ -23,8 +23,8 @@ cmdline_args = ["./darknet",
                 # "frame0.jpg"
                 ]
 
-cmdline_args_str = "./darknet detector test obj.data yolov3-tiny-prn-obj.cfg backup/yolov3-tiny-prn-obj_final.weights -ext_output -dont_show -out result.json < frames.txt"
-
+# cmdline_args_str = "./darknet detector test obj.data yolov3-tiny-prn-obj.cfg yolov3-tiny-prn-obj_best.weights frames.jpg"
+cmdline_args_str = "./darknet detector test obj.data yolov3-tiny-prn-obj.cfg yolov3-tiny-prn-obj_best.weights -ext_output -dont_show -out resultz.json < frames.txt"
 process = Popen(cmdline_args_str, stdout=PIPE, stderr=PIPE, shell=True)
 stdout, stderr = process.communicate()
 print(stdout.decode('utf-8'))
