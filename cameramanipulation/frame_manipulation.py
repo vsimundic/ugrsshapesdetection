@@ -7,7 +7,7 @@ def readFrame(cap):
 
 
 def displayFrame(frame, camera_number=0):
-    cv2.imshow("frame camera {}".format(camera_number), frame)
+    cv2.imshow("frame cameramanipulation {}".format(camera_number), frame)
     cv2.waitKey(0)
 
 

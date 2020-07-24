@@ -28,10 +28,32 @@ cv2.destroyAllWindows()
 cropped_im = cv2.cvtColor(cropped_im, cv2.COLOR_BGR2RGB)
 # rows, cols, _ = image_ycrcb.shape
 
-r = int(np.mean(cropped_im[:, :, 0]))
-g = int(np.mean(cropped_im[:, :, 1]))
-b = int(np.mean(cropped_im[:, :, 2]))
-# print(cropped_im[:, :, 0])
+r = 0
+g = 0
+b = 0
+num = 0
+for rgb_channel in range(1):
+    num = 0
+    for value in np.nditer(cropped_im[:, :, rgb_channel]):
+        num += 1
+        if rgb_channel == 0:
+            r += value*value
+        elif rgb_channel == 1:
+            g += value*value
+        elif rgb_channel == 2:
+            b += value*value
 
-print(b, g, r)
+print(r)
+print(r/num)
+r = int(np.sqrt(r/num))
+g = int(np.sqrt(g/num))
+b = int(np.sqrt(b/num))
+
+
+# r = int(np.mean(cropped_im[:, :, 0]))
+# g = int(np.mean(cropped_im[:, :, 1]))
+# b = int(np.mean(cropped_im[:, :, 2]))
+# # print(cropped_im[:, :, 0])
+
+print(r, g, b)
 print(min(cld.colors.items(), key=cld.NearestColorKey((r, g, b))))

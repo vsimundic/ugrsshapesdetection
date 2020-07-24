@@ -22,11 +22,9 @@ class Webcam:
         else:
             cv2.imwrite(path, self.last_frame)
 
-
     def setResolution(self, width=640, height=480):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     def checkIsOpened(self):
         return self.cap.isOpened()
-

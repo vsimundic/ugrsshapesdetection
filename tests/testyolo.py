@@ -1,44 +1,25 @@
 import fcntl
 import os.path, sys
+import yolodetection.yolo
 
 # sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-os.chdir("/home/pi/UGRS_projekt/darknet_new/darknet-nnpack")  # change to where darknet is
+os.chdir("/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet")  # change to where darknet is
 
 from subprocess import Popen, PIPE
 import select
-import cv2
+# import cv2
 import time
+import json
 
-"""
-start = time.time()
+data = yolodetection.yolo.readJSONDetections(path="/result.json")
+print(json.dumps(data, indent=4, sort_keys=True))
+object_info = yolodetection.yolo.readJSONObject(data[0])
 
-cmdline_args = ["./darknet",
-                "detector", "test",
-                "obj.data",
-                "yolov3-tiny-prn-obj.cfg",
-                "yolov3-tiny-prn-obj_best.weights",
-                "-dont_show",
-                # "-out",
-                # "result.json", "<", "frames.txt"
-                # "frame0.jpg"
-                ]
-process = Popen(cmdline_args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+x_center, y_center, width, height = yolodetection.yolo.readBBoxCoordinates(object_info[2])
+top_left_corner = (int(x_center - width / 2), int(y_center - height / 2))
+bottom_right_corner = (int(x_center + width / 2), int(y_center + height / 2))
 
-stdout, stderr = process.communicate(b"frame0.jpg\n")
+#
+# im = cv2.imread("frame0.jpg")
+# im = cv2.rectangle(img=im, pt1=top_left_corner, pt2=bottom_right_corner, color=(255, 0, 0))
 
-print(stderr.decode('utf-8'))
-print(stdout.decode('utf-8'))
-
-
-end = time.time()
-
-print(end - start)
-"""
-
-cmdline_args = ["./darknet",
-                "detector", "test",
-                "obj.data",
-                "yolov3-tiny-prn-obj.cfg",
-                "yolov3-tiny-prn-obj_best.weights",
-                "-dont_show",
-                ]

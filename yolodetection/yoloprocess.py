@@ -14,7 +14,7 @@ class YOLOProcess:
             cmdline_args = ["/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/darknet",
                             "detect",
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/cfg/coco.data",
-                            "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn-obj.cfg",
+                            "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn.cfg",
                             "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet/yolov3-tiny-prn.weights",
                             "-thresh", "0.1"]
 

@@ -1,4 +1,4 @@
-from camera.webcam import Webcam
+from cameramanipulation.webcam import Webcam
 import cv2
 
 cam1 = Webcam(1)
