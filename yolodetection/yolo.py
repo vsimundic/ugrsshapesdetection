@@ -10,12 +10,12 @@ import json
 import operator
 
 classes_scores = {
-    'valjak': 0.0,
-    'piramida': 0.0,
-    'kocka': 0.0,
-    'kugla': 0.0,
-    'kvadar': 0.0,
-    'stozac': 0.0,
+    'Valjak': 0.0,
+    'Piramida': 0.0,
+    'Kocka': 0.0,
+    'Kugla': 0.0,
+    'Kvadar': 0.0,
+    'Stozac': 0.0,
 }
 
 

@@ -15,16 +15,16 @@ from math import sqrt
 #           }
 
 # RGB
-colors = {'red': (255, 0, 0),
-          'green': (0, 255, 0),
-          'blue': (0, 0, 255),
-          'yellow': (255, 255, 0),
+colors = {'Crvena': (255, 0, 0),
+          'Zelena': (0, 255, 0),
+          'Plava': (0, 0, 255),
+          'Zuta': (255, 255, 0),
           # 'orange': (255, 127, 0),
-          'white': (255, 255, 255),
-          'black': (0, 0, 0),
+          # 'Bijela': (255, 255, 255),
+          # 'Crna': (0, 0, 0),
           # 'gray': (127, 127, 127),
           # 'pink': (255, 127, 127),
-          'purple': (127, 0, 255)}
+          'Ljubicasta': (127, 0, 255)}
 
 
 def ImageBGR2YCrCb(image):
