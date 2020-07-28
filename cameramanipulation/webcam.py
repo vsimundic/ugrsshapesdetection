@@ -13,7 +13,7 @@ class Webcam:
         ret, frame = self.cap.read()
         self.last_frame = frame
 
-        return ret, frame
+        return ret, self.last_frame
 
     def saveFrame(self, grayscale=False, path="frame.jpg"):
         if grayscale:
@@ -28,3 +28,28 @@ class Webcam:
 
     def checkIsOpened(self):
         return self.cap.isOpened()
+
+
+def findCamID():
+    i = 0
+    while True:
+        i += 1
+        try:
+            cap = Webcam(i)
+            ret, frame = cap.getFrame()
+            
+            if ret and frame is not None:
+                cap.releaseCamera()
+                return i
+            
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print("Error location: ", exc_type, fname, exc_tb.tb_lineno)
+            print("Error description: ", e)
+            
+            cap.releaseCamera()
+            continue
+        
+        
+        

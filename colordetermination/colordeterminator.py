@@ -1,5 +1,6 @@
 import cv2
 from math import sqrt
+import numpy as np
 
 # # YCrCb colorspace - Y, Cr, Cb
 # colors = {'red': (76, 255, 85),
@@ -15,16 +16,13 @@ from math import sqrt
 #           }
 
 # RGB
-colors = {'Crvena': (255, 0, 0),
-          'Zelena': (0, 255, 0),
-          'Plava': (0, 0, 255),
-          'Zuta': (255, 255, 0),
-          # 'orange': (255, 127, 0),
-          # 'Bijela': (255, 255, 255),
-          # 'Crna': (0, 0, 0),
-          # 'gray': (127, 127, 127),
-          # 'pink': (255, 127, 127),
-          'Ljubicasta': (127, 0, 255)}
+colors = {'Crvena': (240, 0, 0),
+          'Zelena': (0, 240, 0),
+          'Plava': (0, 0, 240),
+          'Zuta': (240, 240, 0),
+          'Bijela': (230, 230, 230),
+          'Crna': (25, 25, 25),
+          'Ljubicasta': (115, 0, 240)}
 
 
 def ImageBGR2YCrCb(image):
@@ -53,6 +51,7 @@ def PixelBGR2YCrCb(R, G, B):
 
 def distance(left, right):
     return sum((l - r) ** 2 for l, r in zip(left, right)) ** 0.5
+    
 
 
 class NearestColorKey(object):
@@ -61,3 +60,17 @@ class NearestColorKey(object):
 
     def __call__(self, item):
         return distance(self.goal, item[1])
+
+
+def detectRGBColorArea(area, rgb=False):
+    new_area = area.copy()
+    
+    if not rgb:
+        new_area = cv2.cvtColor(area, cv2.COLOR_BGR2RGB)
+    
+    r = int(np.mean(new_area[:, :, 0]))
+    g = int(np.mean(new_area[:, :, 1]))
+    b = int(np.mean(new_area[:, :, 2]))
+
+    COLOR_NAME = min(colors.items(), key=NearestColorKey((r, g, b)))
+    return COLOR_NAME[0]
