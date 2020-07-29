@@ -1,5 +1,9 @@
 import cv2
+import os
+import sys
 
+width = 640
+height = 480
 
 class Webcam:
     def __init__(self, cam_id=0):
@@ -11,6 +15,14 @@ class Webcam:
 
     def getFrame(self):
         ret, frame = self.cap.read()
+        
+        # frame = frame[30:height-40, 60:width-35,:]
+        try:
+            frame = frame[0:height, 58:width-58,:]
+        
+        except Exception as e:
+            return False, None
+        
         self.last_frame = frame
 
         return ret, self.last_frame
@@ -30,8 +42,8 @@ class Webcam:
         return self.cap.isOpened()
 
 
-def findCamID():
-    i = 0
+def findCamID(taken_id=-5):
+    i = -1
     while True:
         i += 1
         try:
@@ -39,8 +51,10 @@ def findCamID():
             ret, frame = cap.getFrame()
             
             if ret and frame is not None:
-                cap.releaseCamera()
-                return i
+                if i != taken_id:
+                    cap.releaseCamera()
+                    findCamID.x = i
+                    return i
             
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()

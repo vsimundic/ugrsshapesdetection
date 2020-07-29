@@ -16,13 +16,13 @@ import numpy as np
 #           }
 
 # RGB
-colors = {'Crvena': (240, 0, 0),
-          'Zelena': (0, 240, 0),
-          'Plava': (0, 0, 240),
-          'Zuta': (240, 240, 0),
-          'Bijela': (230, 230, 230),
+colors = {'Crvena': (200, 0, 0),
+          'Zelena': (0, 200, 0),
+          'Plava': (0, 0, 200),
+          'Zuta': (200, 200, 0),
+          'Bijela': (200, 200, 200),
           'Crna': (25, 25, 25),
-          'Ljubicasta': (115, 0, 240)}
+          'Ljubicasta': (115, 0, 200)}
 
 
 def ImageBGR2YCrCb(image):
@@ -67,6 +67,8 @@ def detectRGBColorArea(area, rgb=False):
     
     if not rgb:
         new_area = cv2.cvtColor(area, cv2.COLOR_BGR2RGB)
+    
+    print(new_area[:,:,0])
     
     r = int(np.mean(new_area[:, :, 0]))
     g = int(np.mean(new_area[:, :, 1]))

@@ -10,14 +10,18 @@ from .yolodetection import yolo
 from .cameramanipulation import webcam
 from .colordetermination import colordeterminator as clrd
 from .uartcommunication import communicationhandler as uartcom
+from .lcd import lcddriver, i2c_lib
 
 import cv2
 import numpy as np
 from time import sleep
 import serial
 
-CAM_NUMBER = 1
-show_images = True
+CAM_NUMBER = 2
+show_images_flag = True
+lcd_flag = False
+determine_color_flag = False
+
 
 def run():
     print("Krenio")
@@ -25,12 +29,16 @@ def run():
     # initialize serial
     uarthandler = uartcom.SerialHandler(port='/dev/ttyAMA0', baud_rate=9600)
     
+    # initialize lcd
+    if lcd_flag:
+        display = lcddriver.lcd()
+    
     # find ids for cameras
     id_cam2 = -1
-    id_cam1 = webcam.findCamID()
+    id_cam1 = webcam.findCamID(-5)
     print(id_cam1)
     if CAM_NUMBER == 2:
-        id_cam2 = webcam.findCamID()
+        id_cam2 = webcam.findCamID(id_cam1)
         print(id_cam2)
     
     # write how many images to detect based on the number of cameras
@@ -42,6 +50,8 @@ def run():
     while True:
         # initialize cameras
         cam1 = webcam.Webcam(id_cam1)
+        # cam1.setResolution(width=525, height=525)
+        
         if CAM_NUMBER == 2:
             cam2 = webcam.Webcam(id_cam2)
 
@@ -53,12 +63,30 @@ def run():
         if "start" in line_from_stm:
             print("Primio podatak")
             
-            # get frames from cameras
-            ret1, frame1 = cam1.getFrame()
+            while True:
+                # get frames from cameras
+                for k in range(10):
+                    ret1, frame1 = cam1.getFrame()
+                
+                if frame1 is None and not ret1:
+                    cam1.releaseCamera()
+                    id_cam1 = webcam.findCamID(-5)
+                    cam1 = webcam.Webcam(id_cam1)
+                else:
+                    break
             
-            if CAM_NUMBER == 2:
-                ret2, frame2 = cam2.getFrame()
-
+            while True:
+                if CAM_NUMBER == 2:
+                    for k in range(10):
+                        ret2, frame2 = cam2.getFrame()
+                    
+                    if frame2 is None and not ret2:
+                        cam2.releaseCamera()
+                        id_cam2 = webcam.findCamID(id_cam1)
+                        cam2 = webcam.Webcam(id_cam2)
+                    else:
+                        break
+            
             # save images as .jpg for detection
             if ret1:
                 cam1.saveFrame(grayscale=True, path=os.getcwd()+"/frame0.jpg")
@@ -77,7 +105,7 @@ def run():
             if CAM_NUMBER == 2:
                 cam2.releaseCamera()
             
-            if show_images:
+            if show_images_flag:
                 #####################
                 cv2.imshow("First camera", frame1)
                 
@@ -119,7 +147,7 @@ def run():
                 objects = yolo.readJSONObjects(detections_in_frame)
 
                 for frame_object in objects:
-                    print(frame_object)
+                    # print(frame_object)
                     if CLASS_NAME in frame_object.values():
                         print(frame_object)
                         relative_coords = frame_object["relative_coordinates"]
@@ -132,38 +160,60 @@ def run():
                 print("NO DETECTIONS")
                 continue
             
-            # yolo gives center coordinates and width/height
-            center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
-            
-            if frame_id == 1:
-                frame_for_color = frame1
-            elif frame_id == 2:
-                frame_for_color = frame2
-            else:
-                print("No frame for color")
-                uarthandler.write_line("none\r\n")
-                continue
-            
-            # determine color
-            offset = 15
-            area_for_color = frame_for_color[center_x-offset:center_x+offset, center_y-offset:center_y+offset, :].copy()
-            roi_for_color = cv2.cvtColor(area_for_color, cv2.COLOR_BGR2RGB)
-            
-            COLOR_NAME = clrd.detectRGBColorArea(area=area_for_color, rgb=True)
-            
-            print(CLASS_NAME, COLOR_NAME)
-            
-            if show_images:
-                top_left_corner = yolo.getTopLeftCorner(center_x, center_y, width, height)
+            if determine_color_flag:
+                # yolo gives center coordinates and width/height
+                center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
                 
-                cv2.imshow("Detection", frame_for_color[top_left_corner[0]:top_left_corner[0]+width, top_left_corner[1]:top_left_corner[1]+height, :])
-                cv2.imshow("Color determining area", area_for_color)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
+                if frame_id == 1:
+                    frame_for_color = frame1
+                elif frame_id == 2:
+                    frame_for_color = frame2
+                else:
+                    print("No frame for color")
+                    uarthandler.write_line("none\r\n")
+                    continue
+                
+                # determine color
+                offset = 1
+                area_for_color = frame_for_color[center_y-offset:center_y+offset, center_x-offset:center_x+offset, :].copy()
+                roi_for_color = cv2.cvtColor(area_for_color, cv2.COLOR_BGR2RGB)
+                
+                COLOR_NAME = clrd.detectRGBColorArea(area=area_for_color, rgb=True)
+                
+                #print(CLASS_NAME, COLOR_NAME)
+                
+                if show_images_flag and False:
+                    top_left_corner = yolo.getTopLeftCorner(center_x, center_y, width, height)
+                    
+                    cv2.imshow("Detection", frame_for_color[top_left_corner[0]:(top_left_corner[0]+width), top_left_corner[1]:(top_left_corner[1]+height), :])
+                    cv2.imshow("Color determining area", area_for_color)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
             
             # send feedback
             uarthandler.write_line(CLASS_NAME + "\r\n")
             sleep(0.05)
-            uarthandler.write_line(COLOR_NAME + "\r\n")
+            
+            if determine_color_flag:
+                uarthandler.write_line(COLOR_NAME + "\r\n")
             
             print("Poslo podatke")
+            
+            if lcd_flag:
+                print("Cekam za lcd")
+                
+                while True:
+                    line_from_stm = uarthandler.read_line()
+                    
+                    # string from uart needs to start with 'lcd-'
+                    if line_from_stm.startswith("lcd-"):
+                        display.lcd_clear()
+                        
+                        num_items_in_boxes = line_from_stm.split("lcd-")[1].split("/")
+                        
+                        # display numbers of items in boxes
+                        display.lcd_display_string(' '.join(num_items_in_boxes), 1)
+                        
+                        break
+                
+                

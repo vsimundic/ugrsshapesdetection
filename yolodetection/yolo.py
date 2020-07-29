@@ -64,8 +64,8 @@ def readJSONObjects(frame_dict):
 
 
 def readBBoxCoordinates(relative_coords):
-    width = 640
-    height = 480
+    width = 525
+    height = 525
 
     center_x = int(relative_coords['center_x'] * width)
     center_y = int(relative_coords['center_y'] * height)

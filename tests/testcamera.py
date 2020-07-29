@@ -1,7 +1,7 @@
 from ugrsshapesdetection.cameramanipulation.webcam import Webcam
 import cv2
 
-cam1 = Webcam(0)
+cam1 = Webcam(2)
 
 while True:
     ret, frame = cam1.getFrame()
