@@ -16,6 +16,7 @@ CAM_NUMBER = 2
 show_images_flag = True
 lcd_flag = False
 determine_color_flag = False
+offset_color = 5
 
 
 def run():
@@ -42,7 +43,7 @@ def run():
         # initialize cameras
         cam1 = webcam.Webcam(id_cam1)
         # cam1.setResolution(width=525, height=525)
-
+        cam2 = None
         if CAM_NUMBER == 2:
             cam2 = webcam.Webcam(id_cam2)
 
@@ -56,6 +57,7 @@ def run():
 
             while True:
                 # get frames from cameras
+                ret1, frame1 = False, None
                 for k in range(10):
                     ret1, frame1 = cam1.getFrame()
 
@@ -68,6 +70,7 @@ def run():
 
             while True:
                 if CAM_NUMBER == 2:
+                    ret2, frame2 = False, None
                     for k in range(10):
                         ret2, frame2 = cam2.getFrame()
 
@@ -165,21 +168,22 @@ def run():
                     continue
 
                 # determine color
-                offset = 1
-                area_for_color = frame_for_color[center_y - offset:center_y + offset,
-                                 center_x - offset:center_x + offset, :].copy()
+                area_for_color = frame_for_color[center_y - offset_color:center_y + offset_color,
+                                 center_x - offset_color:center_x + offset_color,
+                                 :].copy()
+                COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
-                roi_for_color = cv2.cvtColor(area_for_color, cv2.COLOR_BGR2RGB)
+                print(CLASS_NAME, COLOR_NAME)
 
-                COLOR_NAME = clrd.detectRGBColorArea(area=area_for_color, rgb=True)
-
-                # print(CLASS_NAME, COLOR_NAME)
-
-                if show_images_flag and False:
+                if show_images_flag:
                     top_left_corner = yolo.getTopLeftCorner(center_x, center_y, width, height)
 
-                    cv2.imshow("Detection", frame_for_color[top_left_corner[0]:(top_left_corner[0] + width),
-                                            top_left_corner[1]:(top_left_corner[1] + height), :])
+                    prediction_image = cv2.imread("predictions.jpg", cv2.IMREAD_GRAYSCALE)
+                    prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
+
+                    prediction_image[center_y - offset_color:center_y + offset_color, center_x - offset_color:center_x + offset_color, :] = area_for_color.copy()
+
+                    cv2.imshow("Detection", prediction_image)
                     cv2.imshow("Color determining area", area_for_color)
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()

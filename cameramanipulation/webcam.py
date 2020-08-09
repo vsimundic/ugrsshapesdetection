@@ -17,11 +17,11 @@ class Webcam:
         ret, frame = self.cap.read()
         
         # frame = frame[30:height-40, 60:width-35,:]
-        try:
-            frame = frame[0:height, 58:width-58,:]
-        
-        except Exception as e:
-            return False, None
+        # try:
+        #     frame = frame[0:height, 58:width-58,:]
+        #
+        # except Exception as e:
+        #     return False, None
         
         self.last_frame = frame
 
@@ -64,6 +64,3 @@ def findCamID(taken_id=-5):
             
             cap.releaseCamera()
             continue
-        
-        
-        

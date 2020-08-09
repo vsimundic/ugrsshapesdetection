@@ -15,9 +15,9 @@ cv2.destroyAllWindows()
 
 cropped_im = cv2.cvtColor(cropped_im, cv2.COLOR_BGR2LAB)
 
-r = int(np.mean(cropped_im[:, :, 0]))
-g = int(np.mean(cropped_im[:, :, 1]))
+l = int(np.mean(cropped_im[:, :, 0]))
+a = int(np.mean(cropped_im[:, :, 1]))
 b = int(np.mean(cropped_im[:, :, 2]))
 
-print(str(r) + ', ' + str(g) + ', ' + str(b))
-print(min(cld.colors.items(), key=cld.NearestColorKey((r, g, b))))
+print(str(l) + ', ' + str(a) + ', ' + str(b))
+print(min(cld.colors_lab.items(), key=cld.NearestColorKey((l, a, b))))

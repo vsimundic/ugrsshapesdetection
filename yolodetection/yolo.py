@@ -35,9 +35,10 @@ def get_most_confident_class():
     return max(classes_scores.items(), key=operator.itemgetter(1))[0]
 
 
-def detect():
-    cmdline_args_str = "./darknet detector test obj.data yolov3-tiny-prn-obj.cfg yolov3-tiny-prn-obj_best.weights -ext_output -dont_show -out result.json < frames.txt"
-    process = Popen(cmdline_args_str, stdout=PIPE, stderr=PIPE, shell=True)
+def detect(cmdline_str_args="./darknet detector test obj.data yolov3-tiny-prn-obj.cfg "
+                            "yolov3-tiny-prn-obj_best.weights -ext_output -dont_show -out result.json < frames.txt "):
+
+    process = Popen(cmdline_str_args, stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = process.communicate()
 
     print(stderr.decode('utf-8'))
@@ -69,8 +70,8 @@ def readJSONObjects(frame_dict):
 
 
 def readBBoxCoordinates(relative_coords):
-    width = 525
-    height = 525
+    width = 640
+    height = 480
 
     center_x = int(relative_coords['center_x'] * width)
     center_y = int(relative_coords['center_y'] * height)
