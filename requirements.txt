@@ -1,3 +1,9 @@
 pyserial~=3.4
-opencv-python~=4.2.0.34
 numpy~=1.18.4
+
+pip~=20.2
+wheel~=0.34.2
+cryptography~=1.2.3
+lxml~=3.5.0
+setuptools~=49.2.1
+cv2~=3.4.11

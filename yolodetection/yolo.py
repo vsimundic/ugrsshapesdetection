@@ -2,7 +2,10 @@ import sys
 from os import getcwd, uname
 
 if uname()[4][:3] == 'x86':
-    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+    try:
+        sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+    except ValueError as e:
+        print("Already not installed")
 
 import cv2
 from subprocess import Popen, PIPE
@@ -27,8 +30,10 @@ def reset_class_scores():
 def add_to_class_score(key, value):
     classes_scores[key] += value
 
+
 def get_most_confident_class():
     return max(classes_scores.items(), key=operator.itemgetter(1))[0]
+
 
 def detect():
     cmdline_args_str = "./darknet detector test obj.data yolov3-tiny-prn-obj.cfg yolov3-tiny-prn-obj_best.weights -ext_output -dont_show -out result.json < frames.txt"
