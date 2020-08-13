@@ -7,3 +7,6 @@ cryptography~=1.2.3
 lxml~=3.5.0
 setuptools~=49.2.1
 cv2~=3.4.11
+
+PyQt5~=5.15.0
+pandas~=0.24.2

@@ -1,6 +1,7 @@
 import cv2
 import os
 import sys
+import ugrsshapesdetection.definitions as definitions
 
 width = 640
 height = 480
@@ -42,20 +43,25 @@ class Webcam:
         return self.cap.isOpened()
 
 
-def findCamID(taken_id=-5):
+def findCamID(taken_ids):
     i = -1
     while True:
         i += 1
         try:
             cap = Webcam(i)
             ret, frame = cap.getFrame()
-            
-            if ret and frame is not None:
-                if i != taken_id:
-                    cap.releaseCamera()
-                    findCamID.x = i
-                    return i
-            
+
+            if definitions.EMBEDDED_CAM:
+                if ret and frame is not None:
+                    if i not in taken_ids and i != 0:
+                        cap.releaseCamera()
+                        return i
+            else:
+                if ret and frame is not None:
+                    if i not in taken_ids:
+                        cap.releaseCamera()
+                        return i
+
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

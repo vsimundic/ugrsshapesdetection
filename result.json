@@ -1,0 +1,16 @@
+[
+{
+ "frame_id":1, 
+ "filename":"/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame0.jpg", 
+ "objects": [ 
+  {"class_id":1, "name":"Piramida", "relative_coordinates":{"center_x":0.517202, "center_y":0.424729, "width":0.706554, "height":0.582459}, "confidence":0.595738}
+ ] 
+}, 
+{
+ "frame_id":2, 
+ "filename":"/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame1.jpg", 
+ "objects": [ 
+  {"class_id":1, "name":"Piramida", "relative_coordinates":{"center_x":0.413608, "center_y":0.548801, "width":0.621472, "height":0.538259}, "confidence":0.837725}
+ ] 
+}
+]
