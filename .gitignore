@@ -1,2 +1,4 @@
 data/yolo_config_files/yolov3-obj_best.weights
-yolov3-obj_best.weights
+data/yolo_config_files/frames/frame0.jpg
+data/yolo_config_files/frames/frame1.jpg
+data/yolo_config_files/frames/frame2.jpg

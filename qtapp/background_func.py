@@ -12,7 +12,6 @@ os.chdir(ROOT_DIR)  # change to where darknet is
 
 
 def run_detection():
-
     print("Krenio")
 
     # initialize serial
@@ -67,7 +66,8 @@ def run_detection():
             flag_not_properly_saved = False
             for i in range(CAM_NUMBER):
                 try:
-                    cams[i].saveFrame(grayscale=True, path=os.path.join(ROOT_DIR, "data", "yolo_config_files", "frames", "frame{}.jpg".format(i)))
+                    cams[i].saveFrame(grayscale=True, path=os.path.join(ROOT_DIR, "data", "yolo_config_files", "frames",
+                                                                        "frame{}.jpg".format(i)))
                 except Exception as e:
                     print("No frame!!")
                     uarthandler.write_line("none\r\n")
@@ -87,14 +87,15 @@ def run_detection():
             if show_images_flag:
                 #####################
                 for i in range(CAM_NUMBER):
-                    cv2.imshow("Camera {}".format(i+1), rets_frames[i][1])
+                    cv2.imshow("Camera {}".format(i + 1), rets_frames[i][1])
 
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
                 ######################
 
             # perform detection and save bboxes to .json file
-            yolo.detect("{0}/darknet detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".
+            yolo.detect(
+                "{0}/darknet detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".
                 format(DARKNET_PATH, 'data/yolo_config_files'))
 
             if not os.path.exists('../result.json'):
@@ -144,7 +145,7 @@ def run_detection():
                 center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
 
                 try:
-                    frame_for_color = rets_frames[frame_id-1][1]
+                    frame_for_color = rets_frames[frame_id - 1][1]
 
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -169,8 +170,11 @@ def run_detection():
                     prediction_image = cv2.imread("predictions.jpg", cv2.IMREAD_GRAYSCALE)
                     prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
 
-                    prediction_image[center_y - offset_color:center_y + offset_color, center_x - offset_color:center_x + offset_color, :] = frame_for_color[center_y - offset_color:center_y + offset_color,
-                                 center_x - offset_color:center_x + offset_color, :].copy()
+                    prediction_image[center_y - offset_color:center_y + offset_color,
+                    center_x - offset_color:center_x + offset_color, :] = frame_for_color[
+                                                                          center_y - offset_color:center_y + offset_color,
+                                                                          center_x - offset_color:center_x + offset_color,
+                                                                          :].copy()
 
                     prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
 

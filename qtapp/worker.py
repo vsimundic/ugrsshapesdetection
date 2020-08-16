@@ -28,10 +28,10 @@ class Worker(QtCore.QRunnable):
 
     @QtCore.pyqtSlot()
     def run(self) -> None:
-        '''
-        Runs outsider run
+        """
+        Runs everything
         :return: nothing
-        '''
+        """
 
         # run_detection()
         print("Krenio")
@@ -51,8 +51,9 @@ class Worker(QtCore.QRunnable):
         # write how many images to detect based on the number of cameras
         with open(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames.txt", ), 'w') as f:
             for i in range(definitions.CAM_NUMBER):
-                f.write(os.path.join("data", "yolo_config_files", "frame{}.jpg".format(i), "\n"))
-                # f.write("data/yolo_config_files/frame{}.jpg\n".format(i))
+                # f.write(os.path.join("data", "yolo_config_files", "frames", "frame{}.jpg".format(i)) + "\n")
+                f.writelines(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames", "frame{}.jpg".format(i)) + "\n")
+                # f.write("data/yolo_config_files/frames/frame{}.jpg\n".format(i))
 
         CLASS_NAME = '#'
         COLOR_NAME = '#'
@@ -174,7 +175,7 @@ class Worker(QtCore.QRunnable):
                     for frame_object in objects:
                         # print(frame_object)
                         if CLASS_NAME in frame_object.values():
-                            print(frame_object)
+                            # print(frame_object)
                             relative_coords = frame_object["relative_coordinates"]
                             frame_id = int(detections_in_frame["frame_id"])
                             break
@@ -189,11 +190,11 @@ class Worker(QtCore.QRunnable):
                     print("Reading and determining color")
                     # yolo gives center coordinates and width/height
                     center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
-                    print(center_x, center_y, width, height)
+                    # print(center_x, center_y, width, height)
 
                     try:
                         frame_for_color = rets_frames[frame_id - 1][1]
-                        print(type(frame_for_color))
+                        # print(type(frame_for_color))
 
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -210,7 +211,7 @@ class Worker(QtCore.QRunnable):
                     area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
                     COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
-                    print(CLASS_NAME, COLOR_NAME)
+                    # print(CLASS_NAME, COLOR_NAME)
 
                     if definitions.show_images_flag:
                         print("Showing prediction and color area")
@@ -241,22 +242,22 @@ class Worker(QtCore.QRunnable):
 
                     print("Feedback sent")
 
-                print("Waiting for mass and box data...")
-                while True:
-                    line_from_stm = uarthandler.read_line()
+                    print("Waiting for mass and box data...")
+                    while True:
+                        line_from_stm = uarthandler.read_line()
 
-                    if 'show' in line_from_stm:
-                        print("Data received")
-                        mass_w_box = line_from_stm.split('show-')[1].split('/')
-                        mass = float(mass_w_box[0])
-                        box = int(mass_w_box[1])
+                        if 'show' in line_from_stm:
+                            print("Data received")
+                            mass_w_box = line_from_stm.split('show-')[1].split('/')
+                            mass = float(mass_w_box[0])
+                            box = int(mass_w_box[1])
 
-                        object_to_insert = ['#', '#', mass, box]
-                        if not definitions.flag_not_recognized:
-                            object_to_insert = [CLASS_NAME, COLOR_NAME, mass, box]
-                            print("Object to insert: {}".format(object_to_insert))
+                            object_to_insert = ['#', '#', mass, box]
+                            if not definitions.flag_not_recognized:
+                                object_to_insert = [CLASS_NAME, COLOR_NAME, mass, box]
+                                print("Object to insert: {}".format(object_to_insert))
 
-                        # send to window
-                        self.signals.object_.emit(object_to_insert)
+                            # send to window
+                            self.signals.object_.emit(object_to_insert)
 
-                        break
+                            break

@@ -1,9 +1,17 @@
 [
 {
  "frame_id":1, 
- "filename":"data/yolo_config_files/frame0.jpg/", 
+ "filename":"/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame0.jpg", 
  "objects": [ 
-  {"class_id":2, "name":"Kvadar", "relative_coordinates":{"center_x":0.640897, "center_y":0.493691, "width":0.944222, "height":1.187943}, "confidence":0.583961}
+  {"class_id":2, "name":"Kvadar", "relative_coordinates":{"center_x":0.810372, "center_y":0.323510, "width":0.363199, "height":0.585291}, "confidence":0.932042}, 
+  {"class_id":2, "name":"Kvadar", "relative_coordinates":{"center_x":0.343108, "center_y":0.340732, "width":0.687066, "height":0.885446}, "confidence":0.315167}
+ ] 
+}, 
+{
+ "frame_id":2, 
+ "filename":"/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame1.jpg", 
+ "objects": [ 
+  {"class_id":2, "name":"Kvadar", "relative_coordinates":{"center_x":0.358457, "center_y":0.267011, "width":0.684008, "height":0.630841}, "confidence":0.319218}
  ] 
 }
 ]

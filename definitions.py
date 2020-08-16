@@ -1,8 +1,16 @@
 import os
+import pickle
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DARKNET_PATH = "/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/darknet"
+try:
+    DARKNET_PATH = ""
+    with open(os.path.join(ROOT_DIR, "data", "vars", "variables.pickle"), 'rb') as darknetpath_file:
+        DARKNET_PATH = pickle.load(darknetpath_file)
+except:
+    DARKNET_PATH = ""
+
+
 CAM_NUMBER = 0
 EMBEDDED_CAM = False
 TABLE_HEADER = ['ID', 'Klasa', 'Boja', 'Masa', 'Kutija']
@@ -12,6 +20,11 @@ flag_not_recognized = False
 offset_color = 5
 show_images_flag = False
 determine_color_flag = True
+
+
+def savedarknetpath():
+    with open(os.path.join(ROOT_DIR, "data", "vars", "variables.pickle"), 'wb') as darknetpath_file:
+        pickle.dump(DARKNET_PATH, darknetpath_file)
 
 
 def set_darknet_path(darknet_path):

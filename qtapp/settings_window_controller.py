@@ -58,6 +58,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         # if all three conditions above are met
         if flag_confirm:
             definitions.set_darknet_path(str(darknet_path))
+            definitions.savedarknetpath()
 
             definitions.set_embedded_cam(self.ui.radioButton_embcam_yes.isChecked())
 
