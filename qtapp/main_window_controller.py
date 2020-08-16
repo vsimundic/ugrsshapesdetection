@@ -28,11 +28,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initializeFramesPixmap()
         self.updateImFrames()
 
-        self.ui.tableView_BoxesAll.model().insertRow_([self.ui.tableView_BoxesAll.model().rowCount(), 'Kocka', 'Crna', 2, 1])
-        self.ui.tableView_BoxesAll.model().insertRow_([self.ui.tableView_BoxesAll.model().rowCount(), 'Kvadar', 'Plava', 2, 2])
-        self.ui.tableView_BoxesAll.model().insertRow_([self.ui.tableView_BoxesAll.model().rowCount(), 'Piramida', 'Crvena', 5, 3])
-        self.ui.tableView_BoxesAll.model().insertRow_([self.ui.tableView_BoxesAll.model().rowCount(), 'Stozac', 'Zuta', 6, 4])
+    def insertRowinTables(self, row_in):
+        row_w_id = row_in.copy()
+        row_w_id.insert(0, self.ui.tableView_BoxesAll.model().rowCount())
+
+        self.ui.tableView_BoxesAll.model().insertRow_(row_w_id)
         self.ui.tableView_BoxesAll.model().layoutChanged.emit()
+
+        box_num = row_w_id[-1]
+        if box_num == 1:
+            self.ui.tableView_Box1.model().insertRow_(row_w_id)
+            self.ui.tableView_Box1.model().layoutChanged.emit()
+
+        elif box_num == 2:
+            self.ui.tableView_Box2.model().insertRow_(row_w_id)
+            self.ui.tableView_Box2.model().layoutChanged.emit()
+
+        elif box_num == 3:
+            self.ui.tableView_Box3.model().insertRow_(row_w_id)
+            self.ui.tableView_Box3.model().layoutChanged.emit()
+
+        elif box_num == 4:
+            self.ui.tableView_Other.model().insertRow_(row_w_id)
+            self.ui.tableView_Other.model().layoutChanged.emit()
+
         self.updateBoxNumberLabels()
         self.updateLasPredictedLabels()
 
@@ -45,9 +64,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 tablemodel.cleanModel()
                 tablemodel.layoutChanged.emit()
 
-                self.updateBoxNumberLabels()
-                self.ui.lb_class_name.setText('#')
-                self.ui.lb_color_name.setText('#')
+        self.updateBoxNumberLabels()
+        self.updateLasPredictedLabels()
 
     def clickedSave(self):
 
@@ -55,16 +73,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if not df.empty:
             df.to_csv(os.path.join(definitions.ROOT_DIR, 'data', 'tables', 'objects.csv'), index=False)
-
-        # for i in range(self.ui.tabWidget_Boxes.count()):
-        #     tableviews = self.ui.tabWidget_Boxes.widget(i).findChildren(QtWidgets.QTableView)
-        #     for j in range(len(tableviews)):
-        #         tableview = tableviews[j]
-        #         tablemodel = tableview.model()
-        #
-        #         df = tablemodel.getData()
-        #         if not df.empty:
-        #             df.to_csv(os.path.join(definitions.ROOT_DIR, 'data', 'tables', 'table{}.csv'.format(i)), index=False)
 
     def clickedLoad(self):
         path_to_table = os.path.join(definitions.ROOT_DIR, 'data', 'tables', 'objects.csv')
@@ -74,8 +82,6 @@ class MainWindow(QtWidgets.QMainWindow):
             df = pd.read_csv(path_to_table)
             model.insertData(df)
             model.layoutChanged.emit()
-            self.updateBoxNumberLabels()
-            self.updateLasPredictedLabels()
 
             for index, row in df.iterrows():
                 row_in = []
@@ -95,21 +101,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.ui.tableView_Other.model().insertRow_(row_in)
                     self.ui.tableView_Other.model().layoutChanged.emit()
 
-
-
-        # for i in range(self.ui.tabWidget_Boxes.count()):
-        #     tableviews = self.ui.tabWidget_Boxes.widget(i).findChildren(QtWidgets.QTableView)
-        #     for j in range(len(tableviews)):
-        #         tableview = tableviews[j]
-        #         tablemodel = tableview.model()
-        #
-        #         path_to_table = os.path.join(definitions.ROOT_DIR, 'data', 'tables', 'table{}.csv'.format(i))
-        #         if os.path.exists(path_to_table):
-        #             tablemodel.insertData(pd.read_csv(path_to_table))
-        #
-        #         tablemodel.layoutChanged.emit()
-        #         self.updateBoxNumberLabels()
-        #         self.updateLasPredictedLabels()
+        self.updateBoxNumberLabels()
+        self.updateLasPredictedLabels()
 
     def setDefaultTables(self):
         for i in range(self.ui.tabWidget_Boxes.count()):
@@ -127,17 +120,32 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.lb_BoxOther_num.setText(str(self.ui.tableView_Other.model().rowCount()))
 
     def updateLasPredictedLabels(self):
-        last_object, index = self.ui.tableView_BoxesAll.model().getLast()
-        # last_object_class = self.ui.tableView_BoxesAll.model().getLast().Klasa[]
-        # last_object_color = self.ui.tableView_BoxesAll.model().getLast().Boja
-        # print(last_object_color)
-        self.ui.lb_class_name.setText(last_object.Klasa[index])
-        self.ui.lb_color_name.setText(last_object.Boja[index])
+        if not self.ui.tableView_BoxesAll.model().isEmpty():
+            last_object, index = self.ui.tableView_BoxesAll.model().getLast()
+            self.ui.lb_class_name.setText(last_object.Klasa[index])
+            self.ui.lb_color_name.setText(last_object.Boja[index])
+        else:
+            self.ui.lb_class_name.setText('#')
+            self.ui.lb_color_name.setText('#')
 
     def updateFrames(self):
-        self.ui.img_frame0.setPixmap(QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'yolo_config_files', 'frames', 'frame0.jpg')))
-        self.ui.img_frame0.setPixmap(QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'yolo_config_files', 'frames', 'frame1.jpg')))
+        try:
+            self.ui.img_frame0.setPixmap(
+                QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'data', 'yolo_config_files', 'frames', 'frame0.jpg')))
+            self.ui.stackedWidget_frames.setCurrentIndex(0)
+            print("Done did frame 0")
 
+            self.ui.img_frame1.setPixmap(
+                QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'data', 'yolo_config_files', 'frames', 'frame1.jpg')))
+            self.ui.stackedWidget_frames.setCurrentIndex(1)
+            print("Done did frame 1")
+
+            self.ui.img_frame2.setPixmap(
+                QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'data', 'yolo_config_files', 'frames', 'frame2.jpg')))
+            self.ui.stackedWidget_frames.setCurrentIndex(2)
+            print("Done did frame 2")
+        except Exception as e:
+            print("Couldn't get some frames, sry.")
 
     def initializeFramesPixmap(self):
 
@@ -160,12 +168,12 @@ class MainWindow(QtWidgets.QMainWindow):
             imageframes = self.ui.stackedWidget_frames.widget(i).findChildren(QtWidgets.QLabel)
             for j in range(len(imageframes)):
                 imframe = imageframes[j]
-                imframe.setPixmap(QtGui.QPixmap(os.path.join(definitions.ROOT_DIR, 'data', 'yolo_config_files', 'frames', 'frame{}.jpg'.format(i))))
+                # imframe.setPixmap(QtGui.QPixmap(
+                #     os.path.join(definitions.ROOT_DIR, 'data', 'yolo_config_files', 'frames', 'frame{}.jpg'.format(i))))
                 # self.ui.stackedWidget_frames.setCurrentIndex(i)
                 imframe.mouseReleaseEvent = self.clickedImFrame
 
                 imframe.setHidden(True)
-
 
     def clickedImFrame(self, event):
         index = self.ui.stackedWidget_frames.currentIndex()

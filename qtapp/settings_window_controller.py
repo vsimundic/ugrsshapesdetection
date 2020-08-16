@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 import ugrsshapesdetection.definitions as definitions
 from .worker import Worker
-
+import time
 
 class SettingsWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -14,11 +14,11 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.setFixedSize(760, 320)
         self.ui.btn_Confirm.clicked.connect(self.confirmAndShowMain)
+        self.ui.textEdit_darknet_path.setText(definitions.DARKNET_PATH)
 
         self.main_window = None
-
+        self.worker = None
         self.threadpool = QtCore.QThreadPool()
-        # self.ui.btn_Confirm.clicked.connect(self.startRunThread())
 
     def startRunThread(self):
         pass
@@ -52,20 +52,24 @@ class SettingsWindow(QtWidgets.QMainWindow):
         return flag_confirm, darknet_path
 
     def confirmAndShowMain(self):
+
         flag_confirm, darknet_path = self.checkConditions()
 
         # if all three conditions above are met
         if flag_confirm:
-            definitions.DARKNET_PATH = str(darknet_path)
+            definitions.set_darknet_path(str(darknet_path))
 
-            definitions.EMBEDDED_CAM = self.ui.radioButton_embcam_yes.isChecked()
+            definitions.set_embedded_cam(self.ui.radioButton_embcam_yes.isChecked())
 
+            cam_num = 0
             if self.ui.rB_no1.isChecked():
-                definitions.CAM_NUMBER = 1
+                cam_num = 1
             elif self.ui.rB_no2.isChecked():
-                definitions.CAM_NUMBER = 2
+                cam_num = 2
             else:
-                definitions.CAM_NUMBER = 3
+                cam_num = 3
+
+            definitions.set_cam_number(cam_num)
 
             # destroy current window
             self.ui.centralwidget.hide()
@@ -73,11 +77,19 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.main_window = MainWindow(QtWidgets.QMainWindow())
             # open the main window
             self.main_window.show()
-            worker = Worker()
-            self.threadpool.start(worker)
-            definitions.FLAG_RUN_ = True
 
+            self.worker = Worker()
+            self.worker.signals.object_.connect(self.processSignalFromWorker)
+            self.worker.signals.update_frame_.connect(self.processUpdateFrameSignal)
+            self.threadpool.start(self.worker)
 
+            definitions.set_flag_run(True)
+
+    def processSignalFromWorker(self, object_):
+        self.main_window.insertRowinTables(object_)
+
+    def processUpdateFrameSignal(self):
+        self.main_window.updateFrames()
 
 if __name__ == '__main__':
     import sys

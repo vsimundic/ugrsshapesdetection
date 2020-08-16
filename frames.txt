@@ -1,2 +1,0 @@
-data/yolo_config_files/frame0.jpg
-data/yolo_config_files/frame1.jpg

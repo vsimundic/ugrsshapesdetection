@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../yoloshapesdetection/.idea/yoloshapesdetection.iml" filepath="$PROJECT_DIR$/../yoloshapesdetection/.idea/yoloshapesdetection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../ugrsshapesdetection/.idea/ugrsshapesdetection.iml" filepath="$PROJECT_DIR$/../ugrsshapesdetection/.idea/ugrsshapesdetection.iml" />
     </modules>
   </component>
 </project>

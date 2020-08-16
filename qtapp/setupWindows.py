@@ -6,6 +6,5 @@ import sys
 def initializeWindows():
     app = QtWidgets.QApplication(sys.argv)
     settings_window = SettingsWindow(QtWidgets.QMainWindow())
-    # settings_window.show()
 
     return app, settings_window

@@ -42,6 +42,9 @@ class TableModel(QtCore.QAbstractTableModel):
     def insertRow_(self, row_in):
         self.datatable = self.datatable.append(pd.DataFrame([row_in], columns=definitions.TABLE_HEADER), ignore_index=True)
 
+    def isEmpty(self):
+        return self.datatable.empty
+
     def getData(self):
         return self.datatable
 

@@ -1,11 +1,30 @@
 from PyQt5 import QtCore
 # import ugrsshapesdetection.background_func as func
-from ugrsshapesdetection.qtapp.background_func import run_detection
+# from ugrsshapesdetection.qtapp.background_func import run_detection
+import os
+import sys
+from ..yolodetection import yolo
+from ..cameramanipulation import webcam
+from ..colordetermination import colordeterminator as clrd
+from ..uartcommunication import communicationhandler as uartcom
+import ugrsshapesdetection.definitions as definitions
+from .workersignals import WorkerSignals
+import cv2
+from time import sleep
+import faulthandler
+import numpy as np
+os.chdir(definitions.ROOT_DIR)  # change to where darknet is
+
 
 class Worker(QtCore.QRunnable):
     """
     Worker thread
     """
+
+    def __init__(self):
+        super(Worker, self).__init__()
+
+        self.signals = WorkerSignals()
 
     @QtCore.pyqtSlot()
     def run(self) -> None:
@@ -14,4 +33,230 @@ class Worker(QtCore.QRunnable):
         :return: nothing
         '''
 
-        run_detection()
+        # run_detection()
+        print("Krenio")
+
+        # initialize serial
+        uarthandler = uartcom.SerialHandler(port='/dev/ttyUSB0', baud_rate=9600)
+
+        # camera stuff
+        ids_cams = [-7, -6, -5]
+        cams = [None, None, None]
+
+        # find ids for cameras
+        for i in range(definitions.CAM_NUMBER):
+            ids_cams[i] = webcam.findCamID(ids_cams)
+        print(ids_cams)
+
+        # write how many images to detect based on the number of cameras
+        with open(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames.txt", ), 'w') as f:
+            for i in range(definitions.CAM_NUMBER):
+                f.write(os.path.join("data", "yolo_config_files", "frame{}.jpg".format(i), "\n"))
+                # f.write("data/yolo_config_files/frame{}.jpg\n".format(i))
+
+        CLASS_NAME = '#'
+        COLOR_NAME = '#'
+
+        # looping
+        while True:
+            # initialize cameras
+
+            print("Initializing webcams through IDs...")
+            for i in range(definitions.CAM_NUMBER):
+                cams[i] = webcam.Webcam(ids_cams[i])
+
+            # waiting for data
+            print("Waiting for data...")
+            line_from_stm = uarthandler.read_line()
+
+            # if there comes a trigger word
+            if "start" in line_from_stm:
+                print("Data received...")
+
+                print("Getting frames...")
+                rets_frames = [[False, None], [False, None], [False, None]]
+                for i in range(definitions.CAM_NUMBER):
+                    while True:
+                        # get frames from cameras
+                        for k in range(10):
+                            rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame()
+
+                        if rets_frames[i][1] is None and not rets_frames[i][0]:
+                            cams[i].releaseCamera()
+                            ids_cams[i] = webcam.findCamID(-5)
+                            cams[i] = webcam.Webcam(ids_cams)
+                        else:
+                            break
+
+                # save images as .jpg for detection
+                print("Saving frames...")
+                flag_not_properly_saved = False
+                for i in range(definitions.CAM_NUMBER):
+                    try:
+                        cams[i].saveFrame(grayscale=True,
+                                          path=os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames",
+                                                            "frame{}.jpg".format(i)))
+                    except Exception as e:
+                        print("Error: Couldn't save frame.")
+                        uarthandler.write_line("none\r\n")
+
+                        for j in range(definitions.CAM_NUMBER):
+                            cams[j].releaseCamera()
+
+                        flag_not_properly_saved = True
+                        break
+                if flag_not_properly_saved:
+                    print("Couldn't save properly. Best of luck in the next loop.")
+                    continue
+
+                self.signals.update_frame_.emit()
+
+                # release cameras (needed because it wouldn't get right frames)
+                print("Releasing cameras.")
+                for i in range(definitions.CAM_NUMBER):
+                    cams[i].releaseCamera()
+
+                faulthandler.enable()
+                if definitions.show_images_flag:
+                    #####################
+                    print("Showing all frames. (debug stuff)")
+                    print(definitions.CAM_NUMBER)
+                    for i in range(definitions.CAM_NUMBER):
+                        print("Showing frame{}".format(i))
+                        print(rets_frames[i][1].shape)
+                        cv2.imshow("Camera {}".format(i + 1), rets_frames[i][1])
+                        print("Showed frame{}".format(i))
+
+
+                    print("Showed all frames.")
+                    cv2.waitKey(0)
+                    print("Passed waitkey")
+                    cv2.destroyAllWindows()
+                    ######################
+
+                # perform detection and save bboxes to .json file
+                print("Performing detection!")
+                yolo.detect(
+                    "{0}/darknet detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".
+                        format(definitions.DARKNET_PATH, 'data/yolo_config_files'))
+
+                if not os.path.exists(os.path.join(definitions.ROOT_DIR, "result.json")):
+                    print("Did not find result.json. YOLO probably failed.")
+                    uarthandler.write_line("none\r\n")
+                    continue
+
+                print("Detections successful, reading results.")
+                detections_data = yolo.readJSONDetections(path="result.json")
+
+                yolo.reset_class_scores()
+
+                # get classes and their confidences from json file
+                objects = []
+                frame_id = 0
+                for detections_in_frame in detections_data:
+                    objects = yolo.readJSONObjects(detections_in_frame)
+
+                    for frame_object in objects:
+                        name = frame_object["name"]
+                        confidence = frame_object["confidence"]
+
+                        yolo.add_to_class_score(name, confidence)
+
+                print("Getting most confident class.")
+                CLASS_NAME = yolo.get_most_confident_class()
+
+                # loop through detections and get coordinates
+                relative_coords = {}
+                frame_id = -1
+                for detections_in_frame in detections_data:
+                    objects = yolo.readJSONObjects(detections_in_frame)
+
+                    for frame_object in objects:
+                        # print(frame_object)
+                        if CLASS_NAME in frame_object.values():
+                            print(frame_object)
+                            relative_coords = frame_object["relative_coordinates"]
+                            frame_id = int(detections_in_frame["frame_id"])
+                            break
+
+                # if there are no detections
+                if not relative_coords:
+                    uarthandler.write_line("none\r\n")
+                    print("Relative coords empty, meaning no detection.")
+                    definitions.set_flag_not_recognized(True)
+
+                if definitions.determine_color_flag and not definitions.flag_not_recognized:
+                    print("Reading and determining color")
+                    # yolo gives center coordinates and width/height
+                    center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
+                    print(center_x, center_y, width, height)
+
+                    try:
+                        frame_for_color = rets_frames[frame_id - 1][1]
+                        print(type(frame_for_color))
+
+                    except Exception as e:
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                        print("Error location: ", exc_type, fname, exc_tb.tb_lineno)
+                        print("Error description: ", e)
+
+                        print("No frame for color")
+                        uarthandler.write_line("none\r\n")
+
+                        continue
+
+                    # determine color
+                    area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
+                    COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
+
+                    print(CLASS_NAME, COLOR_NAME)
+
+                    if definitions.show_images_flag:
+                        print("Showing prediction and color area")
+                        prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"),
+                                                      cv2.IMREAD_GRAYSCALE)
+                        prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
+
+                        prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
+                        center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
+                                                                                                      center_y - definitions.offset_color:center_y + definitions.offset_color,
+                                                                                                      center_x - definitions.offset_color:center_x + definitions.offset_color,
+                                                                                                      :].copy()
+
+                        prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
+
+                        cv2.imshow("Detection", prediction_image)
+                        cv2.waitKey(0)
+                        cv2.destroyAllWindows()
+
+                if not definitions.flag_not_recognized:
+                    print("Sending feedback...")
+                    # send feedback
+                    uarthandler.write_line(CLASS_NAME + "\r\n")
+                    sleep(0.05)
+
+                    if definitions.determine_color_flag:
+                        uarthandler.write_line(COLOR_NAME + "\r\n")
+
+                    print("Feedback sent")
+
+                print("Waiting for mass and box data...")
+                while True:
+                    line_from_stm = uarthandler.read_line()
+
+                    if 'show' in line_from_stm:
+                        print("Data received")
+                        mass_w_box = line_from_stm.split('show-')[1].split('/')
+                        mass = float(mass_w_box[0])
+                        box = int(mass_w_box[1])
+
+                        object_to_insert = ['#', '#', mass, box]
+                        if not definitions.flag_not_recognized:
+                            object_to_insert = [CLASS_NAME, COLOR_NAME, mass, box]
+                            print("Object to insert: {}".format(object_to_insert))
+
+                        # send to window
+                        self.signals.object_.emit(object_to_insert)
+
+                        break

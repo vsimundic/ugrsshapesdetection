@@ -1,5 +1,6 @@
 import sys
 from os import getcwd, uname
+from ..definitions import *
 
 if uname()[4][:3] == 'x86':
     try:
@@ -37,7 +38,6 @@ def get_most_confident_class():
 
 def detect(cmdline_str_args="./darknet detector test obj.data yolov3-tiny-prn-obj.cfg "
                             "yolov3-tiny-prn-obj_best.weights -ext_output -dont_show -out result.json < frames.txt "):
-
     process = Popen(cmdline_str_args, stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = process.communicate()
 
@@ -45,12 +45,12 @@ def detect(cmdline_str_args="./darknet detector test obj.data yolov3-tiny-prn-ob
     print(stdout.decode('utf-8'))
 
 
-def readJSONDetections(path="/result.json"):
+def readJSONDetections(path="result.json"):
     if path is None:
-        with open(getcwd() + '/result.json') as f:
+        with open(os.path.join(ROOT_DIR, 'result.json')) as f:
             detections = json.load(f)
     else:
-        with open(getcwd() + path) as f:
+        with open(os.path.join(ROOT_DIR, path)) as f:
             detections = json.load(f)
 
     return detections

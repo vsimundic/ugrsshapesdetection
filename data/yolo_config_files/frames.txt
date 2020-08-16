@@ -1,2 +1,1 @@
-/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame0.jpg
-/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame1.jpg
+data/yolo_config_files/frame0.jpg/

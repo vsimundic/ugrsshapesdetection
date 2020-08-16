@@ -28,9 +28,10 @@ def run_detection():
     print(ids_cams)
 
     # write how many images to detect based on the number of cameras
-    with open("../frames.txt", 'w') as f:
+    with open(os.path.join(ROOT_DIR, "data", "yolo_config_files", "frames.txt", ), 'w') as f:
         for i in range(CAM_NUMBER):
-            f.write("data/yolo_config_files/frame{}.jpg\n".format(i))
+            f.write(os.path.join("data", "yolo_config_files", "frame{}.jpg".format(i), "\n"))
+            # f.write("data/yolo_config_files/frame{}.jpg\n".format(i))
 
     # looping
     while True:
@@ -65,10 +66,9 @@ def run_detection():
             # save images as .jpg for detection
             flag_not_properly_saved = False
             for i in range(CAM_NUMBER):
-                if rets_frames[i][0]:
-                    cams[i].saveFrame(grayscale=True, path="{}/data/yolo_config_files/frames/frame0.jpg".format(ROOT_DIR))
-
-                else:
+                try:
+                    cams[i].saveFrame(grayscale=True, path=os.path.join(ROOT_DIR, "data", "yolo_config_files", "frames", "frame{}.jpg".format(i)))
+                except Exception as e:
                     print("No frame!!")
                     uarthandler.write_line("none\r\n")
 

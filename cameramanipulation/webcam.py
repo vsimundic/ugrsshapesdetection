@@ -26,7 +26,7 @@ class Webcam:
         
         self.last_frame = frame
 
-        return ret, self.last_frame
+        return ret, self.last_frame.copy()
 
     def saveFrame(self, grayscale=False, path="frame.jpg"):
         if grayscale:
