@@ -2,8 +2,8 @@ import serial
 
 
 class SerialHandler:
-	def __init__(self, port='/dev/ttyAMA0', baud_rate=9600):
-		self.handler = serial.Serial(port, baud_rate)
+	def __init__(self, port='/dev/ttyAMA0', timeout=0.1, baud_rate=9600):
+		self.handler = serial.Serial(port, baud_rate, timeout=timeout)
 	
 	def read(self):
 		text = self.handler.read()

@@ -24,6 +24,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.btn_Save.clicked.connect(self.clickedSave)
         self.ui.btn_Load.clicked.connect(self.clickedLoad)
 
+        self.ui.tabWidget_Boxes.setCurrentIndex(0)
+
         self.setDefaultTables()
         self.initializeFramesPixmap()
         self.updateImFrames()
@@ -193,3 +195,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.img_frame0.repaint()
         self.ui.img_frame1.repaint() if definitions.CAM_NUMBER == 2 else False
         self.ui.img_frame2.repaint() if definitions.CAM_NUMBER == 3 else False
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        definitions.kill_thread()

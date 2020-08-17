@@ -12,7 +12,8 @@ from .workersignals import WorkerSignals
 import cv2
 from time import sleep
 import faulthandler
-import numpy as np
+import platform
+
 os.chdir(definitions.ROOT_DIR)  # change to where darknet is
 
 
@@ -37,7 +38,7 @@ class Worker(QtCore.QRunnable):
         print("Krenio")
 
         # initialize serial
-        uarthandler = uartcom.SerialHandler(port='/dev/ttyUSB0', baud_rate=9600)
+        uarthandler = uartcom.SerialHandler(port=definitions.SERIAL_PORT, baud_rate=9600)
 
         # camera stuff
         ids_cams = [-7, -6, -5]
@@ -51,17 +52,26 @@ class Worker(QtCore.QRunnable):
         # write how many images to detect based on the number of cameras
         with open(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames.txt", ), 'w') as f:
             for i in range(definitions.CAM_NUMBER):
-                # f.write(os.path.join("data", "yolo_config_files", "frames", "frame{}.jpg".format(i)) + "\n")
                 f.writelines(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames", "frame{}.jpg".format(i)) + "\n")
-                # f.write("data/yolo_config_files/frames/frame{}.jpg\n".format(i))
 
         CLASS_NAME = '#'
         COLOR_NAME = '#'
 
-        # looping
-        while True:
-            # initialize cameras
+        # yolo command - based on type of OS
+        yolo_command = "{0}/darknet{2} detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".format(
+            definitions.DARKNET_PATH, 'data/yolo_config_files', '.exe' if 'windows' in platform.system().lower() else '')
 
+
+        # looping
+        while definitions.flag_thread_alive:
+
+            try:
+                for i in range(definitions.CAM_NUMBER):
+                    cams[i].releaseCamera()
+            except:
+                pass
+
+            # initialize cameras
             print("Initializing webcams through IDs...")
             for i in range(definitions.CAM_NUMBER):
                 cams[i] = webcam.Webcam(ids_cams[i])
@@ -100,6 +110,7 @@ class Worker(QtCore.QRunnable):
                     except Exception as e:
                         print("Error: Couldn't save frame.")
                         uarthandler.write_line("none\r\n")
+                        definitions.set_flag_found_nothing(True)
 
                         for j in range(definitions.CAM_NUMBER):
                             cams[j].releaseCamera()
@@ -118,33 +129,37 @@ class Worker(QtCore.QRunnable):
                     cams[i].releaseCamera()
 
                 faulthandler.enable()
-                if definitions.show_images_flag:
-                    #####################
-                    print("Showing all frames. (debug stuff)")
-                    print(definitions.CAM_NUMBER)
-                    for i in range(definitions.CAM_NUMBER):
-                        print("Showing frame{}".format(i))
-                        print(rets_frames[i][1].shape)
-                        cv2.imshow("Camera {}".format(i + 1), rets_frames[i][1])
-                        print("Showed frame{}".format(i))
+                # if definitions.show_images_flag:
+                #     #####################
+                #     print("Showing all frames. (debug stuff)")
+                #     print(definitions.CAM_NUMBER)
+                #     for i in range(definitions.CAM_NUMBER):
+                #         print("Showing frame{}".format(i))
+                #         print(rets_frames[i][1].shape)
+                #         cv2.imshow("Camera {}".format(i + 1), rets_frames[i][1])
+                #         print("Showed frame{}".format(i))
+                #
+                #
+                #     print("Showed all frames.")
+                #     cv2.waitKey(0)
+                #     print("Passed waitkey")
+                #     cv2.destroyAllWindows()
+                #     ######################
 
-
-                    print("Showed all frames.")
-                    cv2.waitKey(0)
-                    print("Passed waitkey")
-                    cv2.destroyAllWindows()
-                    ######################
+                # delete result.json if exists
+                try:
+                    os.remove("result.json")
+                except OSError:
+                    pass
 
                 # perform detection and save bboxes to .json file
                 print("Performing detection!")
-                yolo.detect(
-                    "{0}/darknet detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".
-                        format(definitions.DARKNET_PATH, 'data/yolo_config_files'))
+                yolo.detect(yolo_command)
 
                 if not os.path.exists(os.path.join(definitions.ROOT_DIR, "result.json")):
                     print("Did not find result.json. YOLO probably failed.")
                     uarthandler.write_line("none\r\n")
-                    continue
+                    definitions.set_flag_found_nothing(True)
 
                 print("Detections successful, reading results.")
                 detections_data = yolo.readJSONDetections(path="result.json")
@@ -185,6 +200,7 @@ class Worker(QtCore.QRunnable):
                     uarthandler.write_line("none\r\n")
                     print("Relative coords empty, meaning no detection.")
                     definitions.set_flag_not_recognized(True)
+                    definitions.set_flag_found_nothing(True)
 
                 if definitions.determine_color_flag and not definitions.flag_not_recognized:
                     print("Reading and determining color")
@@ -193,6 +209,9 @@ class Worker(QtCore.QRunnable):
                     # print(center_x, center_y, width, height)
 
                     try:
+                        if rets_frames[frame_id - 1][1] is None:
+                            raise
+
                         frame_for_color = rets_frames[frame_id - 1][1]
                         # print(type(frame_for_color))
 
@@ -204,8 +223,8 @@ class Worker(QtCore.QRunnable):
 
                         print("No frame for color")
                         uarthandler.write_line("none\r\n")
+                        definitions.set_flag_found_nothing(True)
 
-                        continue
 
                     # determine color
                     area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
@@ -213,23 +232,23 @@ class Worker(QtCore.QRunnable):
 
                     # print(CLASS_NAME, COLOR_NAME)
 
-                    if definitions.show_images_flag:
-                        print("Showing prediction and color area")
-                        prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"),
-                                                      cv2.IMREAD_GRAYSCALE)
-                        prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
-
-                        prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
-                        center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
-                                                                                                      center_y - definitions.offset_color:center_y + definitions.offset_color,
-                                                                                                      center_x - definitions.offset_color:center_x + definitions.offset_color,
-                                                                                                      :].copy()
-
-                        prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
-
-                        cv2.imshow("Detection", prediction_image)
-                        cv2.waitKey(0)
-                        cv2.destroyAllWindows()
+                    # if definitions.show_images_flag:
+                    #     print("Showing prediction and color area")
+                    #     prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"),
+                    #                                   cv2.IMREAD_GRAYSCALE)
+                    #     prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
+                    #
+                    #     prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
+                    #     center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
+                    #                                                                                   center_y - definitions.offset_color:center_y + definitions.offset_color,
+                    #                                                                                   center_x - definitions.offset_color:center_x + definitions.offset_color,
+                    #                                                                                   :].copy()
+                    #
+                    #     prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
+                    #
+                    #     cv2.imshow("Detection", prediction_image)
+                    #     cv2.waitKey(0)
+                    #     cv2.destroyAllWindows()
 
                 if not definitions.flag_not_recognized:
                     print("Sending feedback...")
@@ -242,6 +261,7 @@ class Worker(QtCore.QRunnable):
 
                     print("Feedback sent")
 
+                if not definitions.flag_not_recognized or definitions.flag_found_nothing:
                     print("Waiting for mass and box data...")
                     while True:
                         line_from_stm = uarthandler.read_line()

@@ -12,29 +12,36 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.parent = parent
         self.ui = Ui_SettingsWindow()
         self.ui.setupUi(self)
-        self.setFixedSize(760, 320)
+        self.setFixedSize(self.size().width(), self.size().height())
         self.ui.btn_Confirm.clicked.connect(self.confirmAndShowMain)
         self.ui.textEdit_darknet_path.setText(definitions.DARKNET_PATH)
+        self.ui.textEdit_serial_port.setText(definitions.SERIAL_PORT)
 
         self.main_window = None
         self.worker = None
         self.threadpool = QtCore.QThreadPool()
 
-    def startRunThread(self):
-        pass
 
     def checkConditions(self):
         flag_confirm = True
 
         # create path from text edit
         darknet_path = Path(self.ui.textEdit_darknet_path.toPlainText())
+        serial_port = Path(self.ui.textEdit_serial_port.toPlainText())
 
-        # check if the path exists and if it's not empty
+        # check if the path for darknet exists and if it's not empty
         if darknet_path.exists() and str(darknet_path) != "." and str(darknet_path) != "":
             self.ui.lb_enterdarknetpath.setStyleSheet("QLabel {color:black}")
         else:
             flag_confirm = False
             self.ui.lb_enterdarknetpath.setStyleSheet("QLabel {color:red}")
+
+        # check if the path for serial port exists and if it's not empty
+        if serial_port.exists() and str(serial_port) != "." and str(serial_port) != "":
+            self.ui.lb_enterserialport.setStyleSheet("QLabel {color:black}")
+        else:
+            flag_confirm = False
+            self.ui.lb_enterserialport.setStyleSheet("QLabel {color:red}")
 
         # check if embedded cam radio buttons are checked
         if self.ui.radioButton_embcam_yes.isChecked() or self.ui.radioButton_embcam_no.isChecked():
@@ -49,17 +56,16 @@ class SettingsWindow(QtWidgets.QMainWindow):
         else:
             flag_confirm = False
             self.ui.lb_how_many_cams.setStyleSheet("QLabel {color:red}")
-        return flag_confirm, darknet_path
+        return flag_confirm, darknet_path, serial_port
 
     def confirmAndShowMain(self):
 
-        flag_confirm, darknet_path = self.checkConditions()
+        flag_confirm, darknet_path, serial_port = self.checkConditions()
 
         # if all three conditions above are met
         if flag_confirm:
             definitions.set_darknet_path(str(darknet_path))
-            definitions.savedarknetpath()
-
+            definitions.set_serial_port(str(serial_port))
             definitions.set_embedded_cam(self.ui.radioButton_embcam_yes.isChecked())
 
             cam_num = 0
@@ -91,6 +97,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
     def processUpdateFrameSignal(self):
         self.main_window.updateFrames()
+
+
+
 
 if __name__ == '__main__':
     import sys
