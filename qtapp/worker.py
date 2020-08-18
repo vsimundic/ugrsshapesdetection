@@ -7,15 +7,18 @@ from ..yolodetection import yolo
 from ..cameramanipulation import webcam
 from ..colordetermination import colordeterminator as clrd
 from ..uartcommunication import communicationhandler as uartcom
+# from ..imagemanipulation import contours
 import ugrsshapesdetection.definitions as definitions
+
 from .workersignals import WorkerSignals
 import cv2
-from time import sleep
+from time import sleep, time
 import faulthandler
 import platform
 
 os.chdir(definitions.ROOT_DIR)  # change to where darknet is
-
+CLASS_NAME = '#'
+COLOR_NAME = '#'
 
 class Worker(QtCore.QRunnable):
     """
@@ -34,11 +37,14 @@ class Worker(QtCore.QRunnable):
         :return: nothing
         """
 
+        global CLASS_NAME
+        global COLOR_NAME
+
         # run_detection()
         print("Krenio")
 
         # initialize serial
-        uarthandler = uartcom.SerialHandler(port=definitions.SERIAL_PORT, baud_rate=9600)
+        uarthandler = uartcom.SerialHandler(port=definitions.SERIAL_PORT, baud_rate=9600, timeout=1)
 
         # camera stuff
         ids_cams = [-7, -6, -5]
@@ -54,16 +60,21 @@ class Worker(QtCore.QRunnable):
             for i in range(definitions.CAM_NUMBER):
                 f.writelines(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames", "frame{}.jpg".format(i)) + "\n")
 
-        CLASS_NAME = '#'
-        COLOR_NAME = '#'
+
 
         # yolo command - based on type of OS
         yolo_command = "{0}/darknet{2} detector test {1}/obj.data {1}/yolov3-obj.cfg {1}/yolov3-obj_best.weights -ext_output -dont_show -out result.json < {1}/frames.txt ".format(
             definitions.DARKNET_PATH, 'data/yolo_config_files', '.exe' if 'windows' in platform.system().lower() else '')
 
 
+        # load contours
+        definitions.load_contours()
+
         # looping
         while definitions.flag_thread_alive:
+
+            definitions.set_flag_found_nothing(False)
+            definitions.set_flag_not_recognized(False)
 
             try:
                 for i in range(definitions.CAM_NUMBER):
@@ -90,7 +101,8 @@ class Worker(QtCore.QRunnable):
                     while True:
                         # get frames from cameras
                         for k in range(10):
-                            rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame()
+                            rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame(contour=definitions.contours[i])
+                            # rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame()
 
                         if rets_frames[i][1] is None and not rets_frames[i][0]:
                             cams[i].releaseCamera()
@@ -154,7 +166,10 @@ class Worker(QtCore.QRunnable):
 
                 # perform detection and save bboxes to .json file
                 print("Performing detection!")
+                start = time()
                 yolo.detect(yolo_command)
+                end = time()
+                print("TIME ELAPSED: {}".format(end - start))
 
                 if not os.path.exists(os.path.join(definitions.ROOT_DIR, "result.json")):
                     print("Did not find result.json. YOLO probably failed.")
@@ -230,6 +245,15 @@ class Worker(QtCore.QRunnable):
                     area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
                     COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
+                    prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"), cv2.IMREAD_GRAYSCALE)
+                    prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
+                    prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
+                    center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
+                                                                                                  center_y - definitions.offset_color:center_y + definitions.offset_color,
+                                                                                                  center_x - definitions.offset_color:center_x + definitions.offset_color,
+                                                                                                  :].copy()
+                    prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
+                    cv2.imwrite(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "colored_area.jpg"), prediction_image)
                     # print(CLASS_NAME, COLOR_NAME)
 
                     # if definitions.show_images_flag:
@@ -253,11 +277,13 @@ class Worker(QtCore.QRunnable):
                 if not definitions.flag_not_recognized:
                     print("Sending feedback...")
                     # send feedback
-                    uarthandler.write_line(CLASS_NAME + "\r\n")
-                    sleep(0.05)
+                    print("CLASS NAME: ", CLASS_NAME)
+                    uarthandler.write_line(CLASS_NAME.strip() + "\r\n")
+                    sleep(0.2)
 
                     if definitions.determine_color_flag:
-                        uarthandler.write_line(COLOR_NAME + "\r\n")
+                        print("COLOR NAME: ", COLOR_NAME)
+                        uarthandler.write_line(COLOR_NAME.strip() + "\r\n")
 
                     print("Feedback sent")
 

@@ -11,8 +11,12 @@ class SettingsWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.parent = parent
         self.ui = Ui_SettingsWindow()
+
         self.ui.setupUi(self)
+
         self.setFixedSize(self.size().width(), self.size().height())
+
+        self.ui.btn_Confirm.setStyleSheet("background-color: #20639B")
         self.ui.btn_Confirm.clicked.connect(self.confirmAndShowMain)
         self.ui.textEdit_darknet_path.setText(definitions.DARKNET_PATH)
         self.ui.textEdit_serial_port.setText(definitions.SERIAL_PORT)

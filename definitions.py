@@ -17,8 +17,6 @@ try:
 except:
     SERIAL_PORT = ""
 
-
-
 CAM_NUMBER = 0
 EMBEDDED_CAM = False
 TABLE_HEADER = ['ID', 'Klasa', 'Boja', 'Masa', 'Kutija']
@@ -31,10 +29,44 @@ offset_color = 5
 show_images_flag = True
 determine_color_flag = True
 
+flag_create_contour = True
+flag_contours_set = False
+contours = []
+
+
+def load_contours():
+    try:
+        for i in range(3):
+            with open(os.path.join(ROOT_DIR, "data", "vars", "variablescontour_cam{}.pickle".format(i)), 'rb') as contours_file_:
+                cont = pickle.load(contours_file_)
+                contours.append(cont)
+    except:
+        pass
+    print(contours)
+
+
+def set_flag_contours_set(flag_in):
+    global flag_contours_set
+    flag_contours_set = flag_in
+
+
+def append_to_contour(i, xy=None):
+    global contours
+
+    if xy is None:
+        xy = []
+
+    contours[i].append(xy)
+
 
 def kill_thread():
     global flag_thread_alive
     flag_thread_alive = False
+
+
+def saveContours():
+    with open(os.path.join(ROOT_DIR, "data", "vars", "variablescontours.pickle"), 'wb') as contours_file_:
+        pickle.dump(contours, contours_file_)
 
 
 def savedarknetpath():
@@ -45,6 +77,7 @@ def savedarknetpath():
 def saveserialport():
     with open(os.path.join(ROOT_DIR, "data", "vars", "variablesserialport.pickle"), 'wb') as serialport_file_:
         pickle.dump(SERIAL_PORT, serialport_file_)
+
 
 def set_serial_port(port):
     global SERIAL_PORT

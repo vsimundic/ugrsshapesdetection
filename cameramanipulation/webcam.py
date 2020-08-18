@@ -2,9 +2,12 @@ import cv2
 import os
 import sys
 import ugrsshapesdetection.definitions as definitions
+import numpy as np
 
 width = 640
 height = 480
+fill_color = [0, 0, 0]
+mask_value = 255
 
 class Webcam:
     def __init__(self, cam_id=0):
@@ -14,17 +17,18 @@ class Webcam:
     def releaseCamera(self):
         self.cap.release()
 
-    def getFrame(self):
+    def getFrame(self, contour=None):
+        if contour is None:
+            contour = [[0, 0]]
+
         ret, frame = self.cap.read()
         
-        # frame = frame[30:height-40, 60:width-35,:]
-        # try:
-        #     frame = frame[0:height, 58:width-58,:]
-        #
-        # except Exception as e:
-        #     return False, None
-        
         self.last_frame = frame
+        if definitions.flag_create_contour:
+            stencil = np.zeros(self.last_frame.shape[:-1]).astype(np.uint8)
+            cv2.fillPoly(stencil, [np.array(contour, dtype=np.int32)], mask_value)
+            sel = stencil != mask_value
+            self.last_frame[sel] = fill_color
 
         return ret, self.last_frame.copy()
 
