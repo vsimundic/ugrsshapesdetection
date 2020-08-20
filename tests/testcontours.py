@@ -4,7 +4,7 @@ import os
 import pickle
 
 contour = []
-name_dump = "variablescontour_cam0.pickle"
+name_dump = "variablescontour_cam1.pickle"
 draw_circ = False
 
 def mouseClick(event, x, y, flags, param):
@@ -14,7 +14,7 @@ def mouseClick(event, x, y, flags, param):
         draw_circ = True
 
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(2)
 ret, img = cap.read()
 cv2.namedWindow("image1")
 cv2.setMouseCallback("image1", mouseClick)

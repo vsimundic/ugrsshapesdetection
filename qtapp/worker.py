@@ -127,11 +127,8 @@ class Worker(QtCore.QRunnable):
                         for j in range(definitions.CAM_NUMBER):
                             cams[j].releaseCamera()
 
-                        flag_not_properly_saved = True
+                        print("Couldn't save properly. Best of luck in the next loop.")
                         break
-                if flag_not_properly_saved:
-                    print("Couldn't save properly. Best of luck in the next loop.")
-                    continue
 
                 self.signals.update_frame_.emit()
 
@@ -199,16 +196,17 @@ class Worker(QtCore.QRunnable):
                 # loop through detections and get coordinates
                 relative_coords = {}
                 frame_id = -1
+                temp_confidence_max = -1.0
                 for detections_in_frame in detections_data:
                     objects = yolo.readJSONObjects(detections_in_frame)
 
                     for frame_object in objects:
-                        # print(frame_object)
                         if CLASS_NAME in frame_object.values():
-                            # print(frame_object)
-                            relative_coords = frame_object["relative_coordinates"]
-                            frame_id = int(detections_in_frame["frame_id"])
-                            break
+                            if temp_confidence_max < frame_object["confidence"]:
+                                relative_coords = frame_object["relative_coordinates"]
+                                frame_id = int(detections_in_frame["frame_id"])
+                                temp_confidence_max = frame_object["confidence"]
+                                break
 
                 # if there are no detections
                 if not relative_coords:
@@ -221,14 +219,12 @@ class Worker(QtCore.QRunnable):
                     print("Reading and determining color")
                     # yolo gives center coordinates and width/height
                     center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
-                    # print(center_x, center_y, width, height)
 
                     try:
                         if rets_frames[frame_id - 1][1] is None:
                             raise
 
                         frame_for_color = rets_frames[frame_id - 1][1]
-                        # print(type(frame_for_color))
 
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -239,7 +235,6 @@ class Worker(QtCore.QRunnable):
                         print("No frame for color")
                         uarthandler.write_line("none\r\n")
                         definitions.set_flag_found_nothing(True)
-
 
                     # determine color
                     area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
@@ -254,25 +249,6 @@ class Worker(QtCore.QRunnable):
                                                                                                   :].copy()
                     prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
                     cv2.imwrite(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "colored_area.jpg"), prediction_image)
-                    # print(CLASS_NAME, COLOR_NAME)
-
-                    # if definitions.show_images_flag:
-                    #     print("Showing prediction and color area")
-                    #     prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"),
-                    #                                   cv2.IMREAD_GRAYSCALE)
-                    #     prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
-                    #
-                    #     prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
-                    #     center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
-                    #                                                                                   center_y - definitions.offset_color:center_y + definitions.offset_color,
-                    #                                                                                   center_x - definitions.offset_color:center_x + definitions.offset_color,
-                    #                                                                                   :].copy()
-                    #
-                    #     prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
-                    #
-                    #     cv2.imshow("Detection", prediction_image)
-                    #     cv2.waitKey(0)
-                    #     cv2.destroyAllWindows()
 
                 if not definitions.flag_not_recognized:
                     print("Sending feedback...")
