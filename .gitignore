@@ -5,3 +5,4 @@ data/vars/*
 result.json
 predictions.jpg
 data/yolo_config_files/yolov3-obj_best.weights
+data/yolo_config_files/yolov3-obj_best_old.weights

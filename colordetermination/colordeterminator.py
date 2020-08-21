@@ -181,4 +181,5 @@ def detectLABColorArea(area, bgr=False):
     b = int(np.mean(area[:, :, 2]))
 
     COLOR_NAME = min(colors_lab.items(), key=NearestColorKey((l, a, b)))
+    print("AAAAAAAAAAA: ", COLOR_NAME)
     return COLOR_NAME[0][:-1]

@@ -204,7 +204,7 @@ class Worker(QtCore.QRunnable):
                         try:
                             if rets_frames[frame_id - 1][1] is None:
                                 raise
-
+                            print("FRAME ID: {}".format(frame_id))
                             frame_for_color = rets_frames[frame_id - 1][1]
 
                         except Exception as e:
@@ -222,14 +222,15 @@ class Worker(QtCore.QRunnable):
                             area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
                             COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
-                            prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "predictions.jpg"), cv2.IMREAD_GRAYSCALE)
+                            prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames",  "frame{}.jpg".format(frame_id - 1)), cv2.IMREAD_GRAYSCALE)
                             prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
                             prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
                             center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
                                                                                                           center_y - definitions.offset_color:center_y + definitions.offset_color,
                                                                                                           center_x - definitions.offset_color:center_x + definitions.offset_color,
                                                                                                           :].copy()
-                            prediction_image = cv2.circle(prediction_image, (center_x, center_y), 5, (255, 0, 0), -1)
+                            prediction_image = cv2.rectangle(prediction_image, (int(center_x-width/2), int(center_y-height/2)), (int(center_x+width/2), int(center_y+height/2)), (255, 0, 255), 1)
+                            prediction_image = cv2.circle(prediction_image, (center_x, center_y), 2, (255, 0, 0), -1)
                             cv2.imwrite(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "colored_area.jpg"), prediction_image)
 
                 if not definitions.flag_not_recognized:
