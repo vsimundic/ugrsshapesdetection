@@ -25,7 +25,7 @@ flag_not_recognized = False
 flag_found_nothing = False
 flag_thread_alive = True
 
-offset_color = 10
+offset_color = 20
 show_images_flag = True
 determine_color_flag = True
 

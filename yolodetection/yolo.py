@@ -41,8 +41,8 @@ def detect(cmdline_str_args="./darknet detector test obj.data yolov3-tiny-prn-ob
     process = Popen(cmdline_str_args, stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = process.communicate()
 
-    print(stderr.decode('utf-8'))
-    print(stdout.decode('utf-8'))
+    # print(stderr.decode('utf-8'))
+    # print(stdout.decode('utf-8'))
 
 
 def readJSONDetections(path="result.json"):

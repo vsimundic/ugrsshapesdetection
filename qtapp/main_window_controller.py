@@ -30,6 +30,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initializeFramesPixmap()
         self.updateImFrames()
 
+        self.ui.tableView_BoxesAll.setAutoScroll(True)
+        self.ui.tableView_Box1.setAutoScroll(True)
+        self.ui.tableView_Box2.setAutoScroll(True)
+        self.ui.tableView_Box3.setAutoScroll(True)
+        self.ui.tableView_Other.setAutoScroll(True)
+
     def insertRowinTables(self, row_in):
         row_w_id = row_in.copy()
         row_w_id.insert(0, self.ui.tableView_BoxesAll.model().rowCount())
@@ -56,6 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.updateBoxNumberLabels()
         self.updateLasPredictedLabels()
+
 
     def clickedReset(self):
         for i in range(self.ui.tabWidget_Boxes.count()):

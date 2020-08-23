@@ -200,6 +200,7 @@ class Worker(QtCore.QRunnable):
                         print("Reading and determining color")
                         # yolo gives center coordinates and width/height
                         center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
+                        print("BOUNDING BOX DIMENSIONS: ", center_x, center_y, width, height)
 
                         try:
                             if rets_frames[frame_id - 1][1] is None:
@@ -219,15 +220,16 @@ class Worker(QtCore.QRunnable):
 
                         if not definitions.flag_not_recognized:
                             # determine color
-                            area_for_color = frame_for_color[center_y - definitions.offset_color:center_y + definitions.offset_color, center_x - definitions.offset_color:center_x + definitions.offset_color, :].copy()
+                            scale = 0.25
+                            area_for_color = frame_for_color[center_y - int(scale*height):center_y + int(scale*height), center_x - int(scale*width):center_x + int(scale*width), :].copy()
                             COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
                             prediction_image = cv2.imread(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames",  "frame{}.jpg".format(frame_id - 1)), cv2.IMREAD_GRAYSCALE)
                             prediction_image = cv2.cvtColor(prediction_image, cv2.COLOR_GRAY2BGR)
-                            prediction_image[center_y - definitions.offset_color:center_y + definitions.offset_color,
-                            center_x - definitions.offset_color:center_x + definitions.offset_color, :] = frame_for_color[
-                                                                                                          center_y - definitions.offset_color:center_y + definitions.offset_color,
-                                                                                                          center_x - definitions.offset_color:center_x + definitions.offset_color,
+                            prediction_image[center_y - int(scale*height):center_y + int(scale*height),
+                            center_x - int(scale*width):center_x + int(scale*width), :] = frame_for_color[
+                                                                                                          center_y - int(scale*height):center_y + int(scale*height),
+                                                                                                          center_x - int(scale*width):center_x + int(scale*width),
                                                                                                           :].copy()
                             prediction_image = cv2.rectangle(prediction_image, (int(center_x-width/2), int(center_y-height/2)), (int(center_x+width/2), int(center_y+height/2)), (255, 0, 255), 1)
                             prediction_image = cv2.circle(prediction_image, (center_x, center_y), 2, (255, 0, 0), -1)
