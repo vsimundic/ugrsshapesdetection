@@ -92,6 +92,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.worker = Worker()
             self.worker.signals.object_.connect(self.processSignalFromWorker)
             self.worker.signals.update_frame_.connect(self.processUpdateFrameSignal)
+            self.worker.signals.update_detection_frame_.connect(self.processUpdateDetectionFrameSignal)
             self.threadpool.start(self.worker)
 
             definitions.set_flag_run(True)
@@ -102,7 +103,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
     def processUpdateFrameSignal(self):
         self.main_window.updateFrames()
 
-
+    def processUpdateDetectionFrameSignal(self):
+        self.main_window.updateDetectionFrame()
 
 
 if __name__ == '__main__':

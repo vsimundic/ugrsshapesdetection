@@ -1,2 +1,2 @@
-/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/ugrsshapesdetection/data/yolo_config_files/frames/frame0.jpg
-/home/valentin/FAKS/UGRS_projekt/alexeyAB_darknet/ugrsshapesdetection/data/yolo_config_files/frames/frame1.jpg
+/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame0.jpg
+/home/valentin/FAKS/UGRS/ugrsshapesdetection/data/yolo_config_files/frames/frame1.jpg

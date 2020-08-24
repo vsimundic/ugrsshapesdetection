@@ -85,6 +85,7 @@ class Worker(QtCore.QRunnable):
             # initialize cameras
             print("Initializing webcams through IDs...")
             for i in range(definitions.CAM_NUMBER):
+                print("Cam {} initialized".format(i))
                 cams[i] = webcam.Webcam(ids_cams[i])
 
             # waiting for data
@@ -101,7 +102,7 @@ class Worker(QtCore.QRunnable):
                     while True:
                         # get frames from cameras
                         for k in range(10):
-                            rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame(contour=definitions.contours[i])
+                            rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame(contour=definitions.contours[i]) if definitions.flag_create_contour else cams[i].getFrame()
 
                         if rets_frames[i][1] is None and not rets_frames[i][0]:
                             cams[i].releaseCamera()
@@ -202,6 +203,7 @@ class Worker(QtCore.QRunnable):
                         center_x, center_y, width, height = yolo.readBBoxCoordinates(relative_coords)
                         print("BOUNDING BOX DIMENSIONS: ", center_x, center_y, width, height)
 
+                        frame_for_color = None
                         try:
                             if rets_frames[frame_id - 1][1] is None:
                                 raise
@@ -218,7 +220,7 @@ class Worker(QtCore.QRunnable):
                             uarthandler.write_line("none\r\n")
                             definitions.set_flag_not_recognized(True)
 
-                        if not definitions.flag_not_recognized:
+                        if not definitions.flag_not_recognized and frame_for_color is not None:
                             # determine color
                             scale = 0.25
                             area_for_color = frame_for_color[center_y - int(scale*height):center_y + int(scale*height), center_x - int(scale*width):center_x + int(scale*width), :].copy()
@@ -233,7 +235,9 @@ class Worker(QtCore.QRunnable):
                                                                                                           :].copy()
                             prediction_image = cv2.rectangle(prediction_image, (int(center_x-width/2), int(center_y-height/2)), (int(center_x+width/2), int(center_y+height/2)), (255, 0, 255), 1)
                             prediction_image = cv2.circle(prediction_image, (center_x, center_y), 2, (255, 0, 0), -1)
-                            cv2.imwrite(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "colored_area.jpg"), prediction_image)
+                            cv2.imwrite(os.path.join(definitions.ROOT_DIR, "data", "yolo_config_files", "frames", "colored_area.jpg"), prediction_image)
+
+                            self.signals.update_detection_frame_.emit()
 
                 if not definitions.flag_not_recognized:
                     print("Sending feedback...")

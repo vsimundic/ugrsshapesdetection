@@ -29,7 +29,7 @@ offset_color = 20
 show_images_flag = True
 determine_color_flag = True
 
-flag_create_contour = True
+flag_create_contour = False
 flag_contours_set = False
 contours = []
 
