@@ -40,7 +40,9 @@ class TableModel(QtCore.QAbstractTableModel):
         self.datatable = data_in
 
     def insertRow_(self, row_in):
-        self.datatable = self.datatable.append(pd.DataFrame([row_in], columns=definitions.TABLE_HEADER), ignore_index=True)
+        # self.datatable = self.datatable.append(pd.DataFrame([row_in], columns=definitions.TABLE_HEADER), ignore_index=True)
+        # self.datatable = self.datatable
+        self.datatable = pd.concat([pd.DataFrame([row_in], columns=definitions.TABLE_HEADER), self.datatable], ignore_index=True, )
 
     def isEmpty(self):
         return self.datatable.empty

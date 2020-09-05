@@ -13,10 +13,13 @@ def createEmptyTableView(tableview):
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        QtWidgets.QMainWindow.__init__(self, parent)
+        super(MainWindow, self).__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+
+        # QtWidgets.QMainWindow.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setFixedSize(1030, 550)
+        self.setFixedSize(1030, 613)
 
         self.parent = parent
         self.last_table = 0
@@ -24,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.btn_Reset.clicked.connect(self.clickedReset)
         self.ui.btn_Save.clicked.connect(self.clickedSave)
         self.ui.btn_Load.clicked.connect(self.clickedLoad)
+        self.ui.btn_StopSort.clicked.connect(self.clickedStopSort)
 
         self.ui.tabWidget_Boxes.setCurrentIndex(0)
 
@@ -36,15 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ui.tableView_Box2.setAutoScroll(True)
         # self.ui.tableView_Box3.setAutoScroll(True)
         # self.ui.tableView_Other.setAutoScroll(True)
-
-    # def beforeInsert(self):
-    #     idx = self.ui.tabWidget_Boxes.currentIndex()
-    #     tableview = self.ui.tabWidget_Boxes.childAt(idx)
-    #
-    #     pass
-
-    # def afterInsert(self):
-    #     pass
 
     def insertRowinTables(self, row_in):
         row_w_id = row_in.copy()
@@ -76,6 +71,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.updateBoxNumberLabels()
         self.updateLasPredictedLabels()
+
+    def clickedStopSort(self):
+        definitions.set_flag_stop_sort(True)
+        msgBox = QtWidgets.QMessageBox(self)
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+
+        msgBox.setWindowTitle("Postupak zaustavljanja sortiranja")
+        msgBox.setText(
+            "Pritiskom na ovu tipku, pokrenut je postupak zaustavljanja sortiranja.\nKako bi se postupak u potpunosti "
+            "izvršio, potrebno je prekinuti snop svjetlosti laserske diode.")
+        # msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+
+        retval = msgBox.exec_()
+        print(retval)
+
+    # def messageBoxClickedOk(self):
+    #     pass
 
     def clickedReset(self):
         for i in range(self.ui.tabWidget_Boxes.count()):
@@ -144,7 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateLasPredictedLabels(self):
         if not self.ui.tableView_BoxesAll.model().isEmpty():
             last_object, index = self.ui.tableView_BoxesAll.model().getLast()
-            self.ui.lb_class_name.setText(last_object.Klasa[index])
+            self.ui.lb_class_name.setText(last_object.Oblik[index])
             self.ui.lb_color_name.setText(last_object.Boja[index])
         else:
             self.ui.lb_class_name.setText('#')
@@ -246,4 +258,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.img_frame3.repaint() if definitions.CAM_NUMBER == 3 else False
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        definitions.kill_thread()
+        print("Closing main")
+        # self.parent.closeEvent(a0)
+        self.parent.destroy()

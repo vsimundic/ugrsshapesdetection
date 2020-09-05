@@ -82,10 +82,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
             definitions.set_cam_number(cam_num)
 
-            # destroy current window
-            self.ui.centralwidget.hide()
-
-            self.main_window = MainWindow(QtWidgets.QMainWindow())
+            self.main_window = MainWindow(self)
             # open the main window
             self.main_window.show()
 
@@ -97,6 +94,10 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
             definitions.set_flag_run(True)
 
+            # destroy current window
+            # self.ui.centralwidget.hide()
+            self.hide()
+
     def processSignalFromWorker(self, object_):
         self.main_window.insertRowinTables(object_)
 
@@ -105,6 +106,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
     def processUpdateDetectionFrameSignal(self):
         self.main_window.updateDetectionFrame()
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        self.threadpool.deleteLater()
 
 
 if __name__ == '__main__':

@@ -13,7 +13,6 @@ import ugrsshapesdetection.definitions as definitions
 from .workersignals import WorkerSignals
 import cv2
 from time import sleep, time
-import faulthandler
 import platform
 
 os.chdir(definitions.ROOT_DIR)  # change to where darknet is
@@ -92,8 +91,20 @@ class Worker(QtCore.QRunnable):
             print("Waiting for data...")
             line_from_stm = uarthandler.read_line()
 
+
             # if there comes a trigger word
-            if "start" in line_from_stm:
+            if "reset?" in line_from_stm:
+                if definitions.flag_stop_sort:
+                    sleep(0.2)
+                    uarthandler.write_line("yes\r\n")
+                    definitions.set_flag_stop_sort(False)
+                    print("Sent stop")
+                else:
+                    sleep(0.2)
+                    uarthandler.write_line("nope\r\n")
+                    print("Sent go")
+
+            elif "start" in line_from_stm:
                 print("Data received...")
 
                 print("Getting frames...")
@@ -101,7 +112,7 @@ class Worker(QtCore.QRunnable):
                 for i in range(definitions.CAM_NUMBER):
                     while True:
                         # get frames from cameras
-                        for k in range(10):
+                        for k in range(3):
                             rets_frames[i][0], rets_frames[i][1] = cams[i].getFrame(contour=definitions.contours[i]) if definitions.flag_create_contour else cams[i].getFrame()
 
                         if rets_frames[i][1] is None and not rets_frames[i][0]:
@@ -121,6 +132,16 @@ class Worker(QtCore.QRunnable):
                     except Exception as e:
                         print("Error: Couldn't save frame.")
                         uarthandler.write_line("none\r\n")
+
+                        if definitions.flag_stop_sort:
+                            sleep(0.2)
+                            uarthandler.write_line("stop\r\n")
+                            definitions.set_flag_stop_sort(False)
+                            print("Sent stop")
+                        else:
+                            uarthandler.write_line("go\r\n")
+                            print("Sent go")
+
                         definitions.set_flag_found_nothing(True)
 
                         for j in range(definitions.CAM_NUMBER):
@@ -156,6 +177,14 @@ class Worker(QtCore.QRunnable):
                     print("Did not find result.json. YOLO probably failed.")
                     uarthandler.write_line("none\r\n")
                     definitions.set_flag_not_recognized(True)
+                    if definitions.flag_stop_sort:
+                        sleep(0.2)
+                        uarthandler.write_line("stop\r\n")
+                        definitions.set_flag_stop_sort(False)
+                        print("Sent stop")
+                    else:
+                        uarthandler.write_line("go\r\n")
+                        print("Sent go")
 
                 if not definitions.flag_not_recognized:
                     print("Detections successful, reading results.")
@@ -194,6 +223,16 @@ class Worker(QtCore.QRunnable):
                     # if there are no detections
                     if not relative_coords:
                         uarthandler.write_line("none\r\n")
+
+                        if definitions.flag_stop_sort:
+                            sleep(0.2)
+                            uarthandler.write_line("stop\r\n")
+                            definitions.set_flag_stop_sort(False)
+                            print("Sent stop")
+                        else:
+                            uarthandler.write_line("go\r\n")
+                            print("Sent go")
+
                         print("Relative coords empty, meaning no detection.")
                         definitions.set_flag_not_recognized(True)
 
@@ -218,11 +257,21 @@ class Worker(QtCore.QRunnable):
 
                             print("No frame for color")
                             uarthandler.write_line("none\r\n")
+
+                            if definitions.flag_stop_sort:
+                                sleep(0.2)
+                                uarthandler.write_line("stop\r\n")
+                                definitions.set_flag_stop_sort(False)
+                                print("Sent stop")
+                            else:
+                                uarthandler.write_line("go\r\n")
+                                print("Sent go")
+
                             definitions.set_flag_not_recognized(True)
 
                         if not definitions.flag_not_recognized and frame_for_color is not None:
                             # determine color
-                            scale = 0.25
+                            scale = definitions.scale
                             area_for_color = frame_for_color[center_y - int(scale*height):center_y + int(scale*height), center_x - int(scale*width):center_x + int(scale*width), :].copy()
                             COLOR_NAME = clrd.detectLABColorArea(area=area_for_color, bgr=True)
 
@@ -244,11 +293,22 @@ class Worker(QtCore.QRunnable):
                     # send feedback
                     print("CLASS NAME: ", CLASS_NAME)
                     uarthandler.write_line(CLASS_NAME.strip() + "\r\n")
+
                     sleep(0.2)
 
                     if definitions.determine_color_flag:
                         print("COLOR NAME: ", COLOR_NAME)
                         uarthandler.write_line(COLOR_NAME.strip() + "\r\n")
+                        sleep(0.2)
+
+                    if definitions.flag_stop_sort:
+                        uarthandler.write_line("stop\r\n")
+                        definitions.set_flag_stop_sort(False)
+                        print("Sent stop")
+                    else:
+                        uarthandler.write_line("go\r\n")
+                        print("Sent go")
+
 
                     print("Feedback sent")
 

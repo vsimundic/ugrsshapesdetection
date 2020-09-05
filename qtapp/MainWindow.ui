@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1030</width>
-    <height>550</height>
+    <height>613</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,7 +286,7 @@
     <property name="alignment">
      <set>Qt::AlignCenter</set>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -358,11 +358,6 @@
       </item>
      </layout>
     </widget>
-    <zorder>lb_class</zorder>
-    <zorder>lb_color</zorder>
-    <zorder>lb_class_name</zorder>
-    <zorder>lb_color_name</zorder>
-    <zorder></zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_NumberOfElements">
     <property name="enabled">
@@ -514,6 +509,19 @@
       </item>
      </layout>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="btn_StopSort">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>540</y>
+      <width>511</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Zaustavi sortiranje</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
