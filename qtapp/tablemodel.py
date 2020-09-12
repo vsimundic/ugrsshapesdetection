@@ -67,4 +67,5 @@ class TableModel(QtCore.QAbstractTableModel):
     def getLast(self):
         df = self.datatable.copy(deep=True)
 
-        return df[df.index == df.index.max()], df.index.max()
+        return df[df.index == df.index.min()], df.index.min()
+

@@ -152,6 +152,7 @@ class Worker(QtCore.QRunnable):
 
                 self.signals.update_frame_.emit()
 
+
                 # release cameras (needed because it wouldn't get right frames)
                 print("Releasing cameras.")
                 try:
